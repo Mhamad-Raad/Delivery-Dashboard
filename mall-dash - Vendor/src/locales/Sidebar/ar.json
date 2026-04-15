@@ -1,0 +1,23 @@
+{
+  "appName": "Akkooo Mall",
+  "appSubtitle": "لوحة التحكم",
+  "mainMenu": "القائمة الرئيسية",
+  "management": "الإدارة",
+  "system": "النظام",
+  "dashboard": "لوحة التحكم",
+  "users": "المستخدمون",
+  "buildings": "المباني",
+  "vendors": "الباعة",
+  "products": "المنتجات",
+  "orders": "الطلبات",
+  "analytics": "التحليلات",
+  "reports": "التقارير",
+  "settings": "الإعدادات",
+  "profile": "الملف الشخصي",
+  "profileDescription": "إدارة حسابك",
+  "vendorProfile": "ملف البائع",
+  "vendorProfileDescription": "إدارة تفاصيل متجرك",
+  "logout": "تسجيل الخروج",
+  "themes": "السمات"
+}
+

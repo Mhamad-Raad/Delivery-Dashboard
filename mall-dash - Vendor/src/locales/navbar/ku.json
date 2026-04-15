@@ -1,0 +1,16 @@
+{
+  "home": "سەرەکی",
+  "dashboard": "داشبۆرد",
+  "users": "بەکارهێنەران",
+  "create": "دروستکردن",
+  "vendors": "فرۆشیارەکان",
+  "products": "بەرھەمەکان",
+  "buildings": "بیناکان",
+  "reports": "ڕاپۆرتەکان",
+  "settings": "ڕێکخستنەکان",
+  "toggleSidebar": "گۆڕینی شریتی لایەن",
+  "buildingsManagement": "بەڕێوەبردنی بیناکان",
+  "vendorsManagement": "بەڕێوەبردنی فرۆشیارەکان",
+  "productsManagement": "بەڕێوەبردنی بەرھەمەکان"
+}
+

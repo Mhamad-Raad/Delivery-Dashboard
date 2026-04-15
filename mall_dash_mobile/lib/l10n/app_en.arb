@@ -1,0 +1,13 @@
+{
+  "appTitle": "Mall Dash",
+  "theme": "Theme",
+  "language": "Language",
+  "lightTheme": "Light",
+  "darkTheme": "Dark",
+  "systemTheme": "System",
+  "loginTitle": "Login",
+  "username": "Username",
+  "password": "Password",
+  "loginButton": "Sign In",
+  "welcomeMessage": "Welcome back!"
+}

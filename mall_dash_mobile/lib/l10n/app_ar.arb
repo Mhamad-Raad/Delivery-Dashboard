@@ -1,0 +1,13 @@
+{
+  "appTitle": "Mall Dash",
+  "theme": "المظهر",
+  "language": "اللغة",
+  "lightTheme": "فاتح",
+  "darkTheme": "داكن",
+  "systemTheme": "النظام",
+  "loginTitle": "تسجيل الدخول",
+  "username": "اسم المستخدم",
+  "password": "كلمة المرور",
+  "loginButton": "دخول",
+  "welcomeMessage": "مرحباً بعودتك!"
+}

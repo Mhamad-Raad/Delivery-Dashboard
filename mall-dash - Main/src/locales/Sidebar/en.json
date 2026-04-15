@@ -1,0 +1,18 @@
+{
+  "appName": "Akkooo Mall",
+  "appSubtitle": "Dashboard",
+  "mainMenu": "Main Menu",
+  "management": "Management",
+  "system": "System",
+  "dashboard": "Dashboard",
+  "users": "Users",
+  "buildings": "Buildings",
+  "vendors": "Vendors",
+  "products": "Products",
+  "orders": "Orders",
+  "analytics": "Analytics",
+  "reports": "Reports",
+  "settings": "Settings",
+  "profile": "Profile",
+  "themes": "Themes"
+}

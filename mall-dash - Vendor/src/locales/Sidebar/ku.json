@@ -1,0 +1,23 @@
+{
+  "appName": "Akkooo Mall",
+  "appSubtitle": "داشبۆرد",
+  "mainMenu": "لیستی سەرەکی",
+  "management": "بەڕێوەبردن",
+  "system": "سیستم",
+  "dashboard": "داشبۆرد",
+  "users": "بەکارهێنەران",
+  "buildings": "بیناکان",
+  "vendors": "فرۆشیارەکان",
+  "products": "بەرھەمەکان",
+  "orders": "داواکارییەکان",
+  "analytics": "ئانالیز",
+  "reports": "ڕاپۆرتەکان",
+  "settings": "ڕێکخستنەکان",
+  "profile": "پرۆفایل",
+  "profileDescription": "هەژمارەکەت بەڕێوەبەرە",
+  "vendorProfile": "پرۆفایلی فرۆشیار",
+  "vendorProfileDescription": "وردەکاری دوکاندەکەت بەڕێوەبەرە",
+  "logout": "چوونە دەرەوە",
+  "themes": "ڕووکارەکان"
+}
+
