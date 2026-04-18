@@ -207,7 +207,7 @@ dependencies:
 
 #### Step 2: Firebase Project Setup
 1. Create Firebase project at console.firebase.google.com
-2. Add Android app (package: `com.example.mall_dash_mobile`)
+2. Add Android app (package: `com.example.delivery_dash_mobile`)
 3. Download `google-services.json` → `android/app/`
 4. Add iOS app
 5. Download `GoogleService-Info.plist` → `ios/Runner/`

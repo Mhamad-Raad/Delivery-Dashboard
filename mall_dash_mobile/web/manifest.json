@@ -1,6 +1,6 @@
 {
-    "name": "mall_dash_mobile",
-    "short_name": "mall_dash_mobile",
+    "name": "delivery_dash_mobile",
+    "short_name": "delivery_dash_mobile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

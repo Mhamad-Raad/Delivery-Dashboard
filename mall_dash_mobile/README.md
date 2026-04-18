@@ -1,4 +1,4 @@
-# mall_dash_mobile
+# delivery_dash_mobile
 
 A new Flutter project.
 

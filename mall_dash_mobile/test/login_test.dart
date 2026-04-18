@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mall_dash_mobile/main.dart';
-import 'package:mall_dash_mobile/src/core/providers/shared_preferences_provider.dart';
+import 'package:delivery_dash_mobile/main.dart';
+import 'package:delivery_dash_mobile/src/core/providers/shared_preferences_provider.dart';
 
 void main() {
   testWidgets('LoginPage renders correctly', (WidgetTester tester) async {
