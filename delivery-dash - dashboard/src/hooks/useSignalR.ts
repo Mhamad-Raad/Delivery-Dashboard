@@ -27,7 +27,7 @@ class SignalRService {
 
     // The hub URL - adjust this based on your backend configuration
     // Common patterns: /hubs/notifications, /notificationHub, /signalr/notifications
-    const baseUrl = API_URL.replace('/MalDashApi', '');
+    const baseUrl = API_URL.replace('/DeliveryDashApi', '');
     const hubUrl = `${baseUrl}/hubs/notifications`;
     console.log('SignalR connecting to:', hubUrl);
 
