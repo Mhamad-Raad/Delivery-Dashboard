@@ -5,9 +5,9 @@ import sidebarEn from './locales/Sidebar/en.json';
 import sidebarAr from './locales/Sidebar/ar.json';
 import sidebarKu from './locales/Sidebar/ku.json';
 
-import navbarEn from './locales/Navbar/en.json';
-import navbarAr from './locales/Navbar/ar.json';
-import navbarKu from './locales/Navbar/ku.json';
+import navbarEn from './locales/navbar/en.json';
+import navbarAr from './locales/navbar/ar.json';
+import navbarKu from './locales/navbar/ku.json';
 
 import usersEn from './locales/Users/en.json';
 import usersAr from './locales/Users/ar.json';
