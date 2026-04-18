@@ -1,7 +1,0 @@
-{
-  "connector": { "name": "local" },
-  "formatters": ["stylish"],
-  "hints": {
-    "no-inline-styles": "off"
-  }
-}
