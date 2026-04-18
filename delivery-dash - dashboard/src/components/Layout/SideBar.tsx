@@ -9,7 +9,6 @@ import {
   Settings,
   FileText,
   ShoppingCart,
-  Building2,
   Store,
   ChevronRight,
   Palette,
@@ -61,11 +60,6 @@ const mainNavItems = [
     titleKey: 'users',
     url: '/users',
     icon: Users,
-  },
-  {
-    titleKey: 'buildings',
-    url: '/buildings',
-    icon: Building2,
   },
   {
     titleKey: 'vendors',

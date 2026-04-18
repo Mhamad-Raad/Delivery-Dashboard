@@ -7,7 +7,6 @@ export const initialUser: UserType = {
   profileImageUrl: '',
   phoneNumber: '',
   email: '',
-  buildingName: '',
   src: '',
   fallback: '',
 };

@@ -13,10 +13,6 @@ import usersEn from './locales/Users/en.json';
 import usersAr from './locales/Users/ar.json';
 import usersKu from './locales/Users/ku.json';
 
-import buildingsEn from './locales/Buildings/en.json';
-import buildingsAr from './locales/Buildings/ar.json';
-import buildingsKu from './locales/Buildings/ku.json';
-
 import vendorsEn from './locales/Vendors/en.json';
 import vendorsAr from './locales/Vendors/ar.json';
 import vendorsKu from './locales/Vendors/ku.json';
@@ -56,7 +52,6 @@ i18n.use(initReactI18next).init({
       sidebar: sidebarEn,
       navbar: navbarEn,
       users: usersEn,
-      buildings: buildingsEn,
       vendors: vendorsEn,
       themes: themesEn,
       home: homeEn,
@@ -71,7 +66,6 @@ i18n.use(initReactI18next).init({
       sidebar: sidebarAr,
       navbar: navbarAr,
       users: usersAr,
-      buildings: buildingsAr,
       vendors: vendorsAr,
       themes: themesAr,
       home: homeAr,
@@ -86,7 +80,6 @@ i18n.use(initReactI18next).init({
       sidebar: sidebarKu,
       navbar: navbarKu,
       users: usersKu,
-      buildings: buildingsKu,
       vendors: vendorsKu,
       themes: themesKu,
       home: homeKu,
@@ -104,7 +97,6 @@ i18n.use(initReactI18next).init({
     'sidebar',
     'navbar',
     'users',
-    'buildings',
     'vendors',
     'themes',
     'home',

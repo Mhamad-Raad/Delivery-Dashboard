@@ -26,22 +26,19 @@ const Users = () => {
   const roleParam = searchParams.get('role');
   const role = roleParam !== null ? Number(roleParam) : null;
   const search = searchParams.get('search') || '';
-  const buildingNameSearch = searchParams.get('buildingNameSearch') || '';
 
   useEffect(() => {
     const params: Record<string, any> = {
       limit,
       page,
       searchTerm: search,
-      buildingNameSearch,
     };
     if (role !== -1) params.role = role;
     if (search) params.search = search;
-    if (buildingNameSearch) params.buildingNameSearch = buildingNameSearch;
     if (limit && page) {
       dispatch(fetchUsers(params));
     }
-  }, [dispatch, limit, page, role, search, buildingNameSearch]);
+  }, [dispatch, limit, page, role, search]);
 
   const hasNoUsers = !loading && users.length === 0 && !error;
   return (

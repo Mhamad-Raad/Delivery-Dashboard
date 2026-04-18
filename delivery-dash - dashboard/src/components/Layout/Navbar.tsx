@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, Users, Store, Package, Building2, FileText, Settings } from 'lucide-react';
+import { Home, Users, Store, Package, FileText, Settings } from 'lucide-react';
 import { Fragment } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store/store';
@@ -26,7 +26,6 @@ export default function Navbar() {
   // Get data from Redux store
   const { user } = useSelector((state: RootState) => state.user);
   const { vendor } = useSelector((state: RootState) => state.vendor);
-  const { building } = useSelector((state: RootState) => state.building);
 
   const capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -38,7 +37,6 @@ export default function Navbar() {
       case 'users': return <Users className={iconClass} />;
       case 'vendors': return <Store className={iconClass} />;
       case 'products': return <Package className={iconClass} />;
-      case 'buildings': return <Building2 className={iconClass} />;
       case 'reports': return <FileText className={iconClass} />;
       case 'settings': return <Settings className={iconClass} />;
       default: return null;
@@ -69,13 +67,6 @@ export default function Navbar() {
       return { label: '', shouldShow: false };
     }
     
-    if (parentSegment === 'buildings') {
-      if (building?.id.toString() === segment) {
-        return { label: building.name || segment, shouldShow: true };
-      }
-      return { label: '', shouldShow: false };
-    }
-
     // For unknown IDs, don't show them
     return { label: segment, shouldShow: false };
   };
@@ -85,7 +76,6 @@ export default function Navbar() {
     if (segment === 'create') return t('create');
     if (segment === 'vendors') return t('vendors');
     if (segment === 'products') return t('products');
-    if (segment === 'buildings') return t('buildings');
     if (segment === 'reports') return t('reports');
     if (segment === 'settings') return t('settings');
     return capitalize(segment.replace(/-/g, ' '));

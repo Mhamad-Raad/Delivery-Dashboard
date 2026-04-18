@@ -33,14 +33,6 @@ const UsersTableSkeleton = () => (
       <Skeleton className='h-6 w-16 rounded-md' />
     </TableCell>
 
-    {/* Location Skeleton - matches Building icon + Name */}
-    <TableCell className='py-4'>
-      <div className='flex items-center gap-2.5 min-w-[150px] h-7'>
-        <Skeleton className='h-7 w-7 rounded-lg shrink-0' />
-        <Skeleton className='h-4 w-32' />
-      </div>
-    </TableCell>
-    
     {/* ChevronRight Skeleton */}
     <TableCell className='py-4 w-12'>
       <Skeleton className='h-4 w-4 rounded' />

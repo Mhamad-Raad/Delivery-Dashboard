@@ -7,7 +7,6 @@ export interface UserType {
   profileImageUrl: string;
   phoneNumber: string;
   email: string;
-  buildingName: string;
   // Helper fields for UI
   src?: string; // Alias for profileImageUrl (for backward compatibility)
   fallback?: string; // Generated initials for avatar fallback

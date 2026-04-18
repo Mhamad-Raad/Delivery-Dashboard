@@ -8,7 +8,6 @@ export const fetchUsers = async (params?: {
   limit?: number;
   searchTerm?: string;
   role?: number;
-  buildingNameSearch?: string;
 }) => {
   try {
     const response = await axiosInstance.get('/Account/users', {

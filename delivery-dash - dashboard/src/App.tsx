@@ -8,9 +8,6 @@ import ResetPassword from '@/pages/ResetPassword';
 import Users from './pages/users/Users';
 import CreateUser from './pages/users/CreateUser';
 import UserDetail from './pages/users/UserDetail';
-import Buildings from './pages/buildings/Buildings';
-import BuildingDetail from './pages/buildings/BuildingDetail';
-import CreateBuilding from './pages/buildings/CreateBuilding';
 import Vendors from './pages/vendors/Vendors';
 import VendorDetail from './pages/vendors/VendorDetail';
 import CreateVendor from './pages/vendors/CreateVendor';
@@ -57,18 +54,6 @@ const router = createBrowserRouter([
       {
         path: '/users/:id',
         element: <UserDetail />,
-      },
-      {
-        path: '/buildings',
-        element: <Buildings />,
-      },
-      {
-        path: '/buildings/create',
-        element: <CreateBuilding />,
-      },
-      {
-        path: '/buildings/:id',
-        element: <BuildingDetail />,
       },
       {
         path: '/vendors',

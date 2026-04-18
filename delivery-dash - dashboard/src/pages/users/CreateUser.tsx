@@ -41,9 +41,6 @@ export default function CreateUser() {
     password: '',
     confirmPassword: '',
     phoneNumber: '',
-    buildingId: '',
-    floorId: '',
-    apartmentId: '',
     role: 3,
     photo: null,
   });
@@ -153,15 +150,12 @@ export default function CreateUser() {
         ...(photo ? { ProfileImageUrl: photo } : {}),
       };
     } else if (type === 'Customer') {
-      const { confirmPassword, photo, buildingId, floorId, apartmentId, ...userData } = customerFormData;
+      const { confirmPassword, photo, ...userData } = customerFormData;
 
       userName = `${customerFormData.firstName} ${customerFormData.lastName}`;
       data = {
         ...userData,
         ...(photo ? { ProfileImageUrl: photo } : {}),
-        ...(buildingId ? { buildingId: parseInt(buildingId) } : {}),
-        ...(floorId ? { floorId: parseInt(floorId) } : {}),
-        ...(apartmentId ? { apartmentId: parseInt(apartmentId) } : {}),
       };
     }
 

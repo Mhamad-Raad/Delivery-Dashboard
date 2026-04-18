@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import UserDetailHeader from '@/components/Users/UserDetail/UserDetailHeader';
 import UserProfileCard from '@/components/Users/UserDetail/UserProfileCard';
 import ContactInfoCard from '@/components/Users/UserDetail/ContactInfoCard';
-import LocationRoleCard from '@/components/Users/UserDetail/LocationRoleCard';
 import SecurityCard from '@/components/Users/UserDetail/SecurityCard';
 import UserDetailSkeleton from '@/components/Users/UserDetail/UserDetailSkeloton';
 import UserErrorCard from '@/components/Users/UserDetail/UserErrorCard';
@@ -169,7 +168,6 @@ const UserDetail = () => {
         lastName: user.lastName ?? '',
         email: user.email ?? '',
         phoneNumber: user.phoneNumber ?? '',
-        buildingName: user.buildingName ?? '',
         profileImageUrl: user.profileImageUrl ?? '',
         imageFile: undefined, // Always clear file on user load
       });
@@ -242,16 +240,10 @@ const UserDetail = () => {
           formData={formData}
           onInputChange={handleInputChange}
         />
-        <div className='grid gap-6 lg:grid-cols-2'>
-          <ContactInfoCard
-            formData={formData}
-            onInputChange={handleInputChange}
-          />
-          <LocationRoleCard
-            formData={formData}
-            onInputChange={handleInputChange}
-          />
-        </div>
+        <ContactInfoCard
+          formData={formData}
+          onInputChange={handleInputChange}
+        />
         <SecurityCard
           password={password}
           confirmPassword={confirmPassword}

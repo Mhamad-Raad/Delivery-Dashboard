@@ -15,15 +15,11 @@ import {
   Search,
   Plus,
   Users as UsersIcon,
-  Building2,
   Shield,
   X,
   Sparkles,
   SlidersHorizontal,
 } from 'lucide-react';
-
-import AutoComplete from '@/components/AutoComplete';
-import { fetchBuildingsByName } from '@/data/Buildings';
 
 const roles = ['SuperAdmin', 'Admin', 'Vendor', 'Tenant'];
 
@@ -53,9 +49,6 @@ const UsersFilters = () => {
   // typedSearch is what user is typing, search is debounced value synced to URL
   const [typedSearch, setTypedSearch] = useState(search);
 
-  const [byBuildingName, setByBuildingName] = useState<string>('');
-  const [buildingKey, setBuildingKey] = useState(0);
-
   const [role, setRole] = useState(() =>
     searchParams.get('role') !== null ? Number(searchParams.get('role')) : -1
   );
@@ -81,11 +74,6 @@ const UsersFilters = () => {
     } else {
       params.delete('search');
     }
-    if (byBuildingName) {
-      params.set('buildingNameSearch', byBuildingName);
-    } else {
-      params.delete('buildingNameSearch');
-    }
     if (role !== -1) {
       params.set('role', String(role));
     } else {
@@ -96,7 +84,7 @@ const UsersFilters = () => {
       replace: true,
     });
     // eslint-disable-next-line
-  }, [search, byBuildingName, role]);
+  }, [search, role]);
 
   // Sync state if URL changes externally (browser nav)
   useEffect(() => {
@@ -106,23 +94,11 @@ const UsersFilters = () => {
     setRole(
       searchParams.get('role') !== null ? Number(searchParams.get('role')) : -1
     );
-    setByBuildingName(searchParams.get('buildingNameSearch') || '');
     // eslint-disable-next-line
   }, [searchParams]);
 
   const handleOnCreate = () => {
     navigate('/users/create');
-  };
-
-  // Async fetching function for AutoComplete
-  const fetchBuildingNames = async (input: string) => {
-    if (!input) return [];
-    const res = await fetchBuildingsByName(input);
-    return Array.isArray(res?.data) ? res.data.map((b: any) => b.name) : [];
-  };
-
-  const handleBuildingNameSelect = (value: string) => {
-    setByBuildingName(value);
   };
 
   const clearSearch = () => {
@@ -133,12 +109,10 @@ const UsersFilters = () => {
   const clearAllFilters = () => {
     setTypedSearch('');
     setSearch('');
-    setByBuildingName('');
     setRole(-1);
-    setBuildingKey(prev => prev + 1); // Force remount of AutoComplete
   };
 
-  const hasActiveFilters = search || byBuildingName || role !== -1;
+  const hasActiveFilters = search || role !== -1;
 
   return (
     <div className='flex flex-col gap-5'>
@@ -202,19 +176,6 @@ const UsersFilters = () => {
                 <X className='size-4' />
               </button>
             )}
-          </div>
-
-          {/* Building Filter */}
-          <div className='relative w-full sm:flex-1 transition-all duration-300'>
-            <Building2 className='absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10 pointer-events-none' />
-            <AutoComplete
-              key={buildingKey}
-              fetchOptions={fetchBuildingNames}
-              onSelectOption={handleBuildingNameSelect}
-              placeholder={t('buildingPlaceholder')}
-              debounceMs={200}
-              className='w-full [&_input]:pl-10 [&_input]:h-10 [&_input]:bg-background/80 [&_input]:border-border/50 [&_input]:rounded-xl [&_input]:transition-all'
-            />
           </div>
 
           {/* Role Filter */}

@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { Mail, Phone, Building2, User as UserIcon, ChevronRight } from 'lucide-react';
+import { Mail, Phone, User as UserIcon, ChevronRight } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -74,9 +74,6 @@ const UsersTable = () => {
               </TableHead>
               <TableHead className='sticky top-0 z-10 font-semibold text-foreground/80 bg-muted/50 backdrop-blur-sm border-b h-12'>
                 {t('tableHeaders.role')}
-              </TableHead>
-              <TableHead className='sticky top-0 z-10 font-semibold text-foreground/80 bg-muted/50 backdrop-blur-sm border-b h-12'>
-                {t('tableHeaders.location')}
               </TableHead>
               <TableHead className='sticky top-0 z-10 w-12 bg-muted/50 backdrop-blur-sm border-b h-12'></TableHead>
             </TableRow>
@@ -161,17 +158,6 @@ const UsersTable = () => {
                         >
                           {translatedRole}
                         </Badge>
-                      </TableCell>
-                      {/* Building/Location */}
-                      <TableCell className='py-4'>
-                        <div className='flex items-center gap-2.5 min-w-[150px]'>
-                          <div className='flex items-center justify-center w-7 h-7 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors'>
-                            <Building2 className='h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors' />
-                          </div>
-                          <span className='text-base font-medium text-foreground/90'>
-                            {user.buildingName || 'N/A'}
-                          </span>
-                        </div>
                       </TableCell>
                       {/* Chevron indicator */}
                       <TableCell className='py-4 w-12'>

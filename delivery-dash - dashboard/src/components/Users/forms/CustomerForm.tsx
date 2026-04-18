@@ -33,9 +33,6 @@ type CustomerFormProps = {
     confirmPassword: string;
     phoneNumber: string;
     role: number;
-    buildingId: string;
-    floorId: string;
-    apartmentId: string;
     photo?: File | null;
   };
   onInputChange: (field: string, value: unknown) => void;

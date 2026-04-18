@@ -1,6 +1,5 @@
 // Dashboard Home Components
 export { default as DashboardStats } from './DashboardStats';
-export { default as OccupancyChart } from './OccupancyChart';
 export { default as VendorDistribution } from './VendorDistribution';
 export { default as TopVendors } from './TopVendors';
 
