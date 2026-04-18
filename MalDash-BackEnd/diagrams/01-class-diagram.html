@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>New Address Model — Class Diagram</title>
+<style>
+  body { margin: 0; padding: 40px; background: #fafafa; font-family: -apple-system, Segoe UI, sans-serif; }
+  h1 { margin: 0 0 8px; color: #222; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 14px; }
+  #diagram { background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+<h1>Address System — New Model (Class Diagram)</h1>
+<div class="sub">Entities, fields, and navigation. Type-specific fields are nullable and enforced by validators.</div>
+<div id="diagram">
+<pre class="mermaid">
+classDiagram
+    direction LR
+
+    class User {
+        +Guid Id
+        +string FirstName
+        +string LastName
+        +string Email
+        +string PhoneNumber
+        +string? ProfileImageUrl
+        --
+        Non-admin users can own addresses
+    }
+
+    class Address {
+        +int Id
+        +Guid UserId
+        +AddressType Type
+        +double Latitude
+        +double Longitude
+        +string PhoneNumber
+        +string Street
+        --common (optional)--
+        +string? Label
+        +string? AdditionalDirections
+        +bool IsDefault
+        --Apartment + Office--
+        +string? BuildingName
+        +string? Floor
+        --Apartment only--
+        +string? ApartmentNumber
+        --House only--
+        +string? HouseName
+        +string? HouseNumber
+        --Office only--
+        +string? CompanyName
+    }
+
+    class Order {
+        +int Id
+        +Guid UserId
+        +int VendorId
+        +int? AddressId
+        +decimal TotalAmount
+        +OrderStatus Status
+        +DateTime CreatedAt
+    }
+
+    class AddressType {
+        &lt;&lt;enumeration&gt;&gt;
+        Apartment = 0
+        House = 1
+        Office = 2
+    }
+
+    class Role {
+        &lt;&lt;enumeration&gt;&gt;
+        SuperAdmin = 0
+        Admin = 1
+        Vendor = 2
+        Customer = 3
+        Driver = 4
+        VendorStaff = 5
+    }
+
+    User "1" --> "0..*" Address : owns
+    User "1" --> "0..*" Order : places
+    Order "0..*" --> "0..1" Address : delivered to
+    Address ..> AddressType : typed by
+    User ..> Role : has role
+</pre>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', themeVariables: { fontSize: '14px' }, flowchart: { useMaxWidth: false }, class: { useMaxWidth: false } });
+</script>
+</body>
+</html>

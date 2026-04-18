@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>What Gets Removed</title>
+<style>
+  body { margin: 0; padding: 40px; background: #fafafa; font-family: -apple-system, Segoe UI, sans-serif; }
+  h1 { margin: 0 0 8px; color: #222; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 14px; }
+  #diagram { background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+<h1>Removed: Old Building Hierarchy</h1>
+<div class="sub">Everything in red goes away. Replaced by a single flat Address table keyed by lat/lng.</div>
+<div id="diagram">
+<pre class="mermaid">
+graph LR
+    subgraph OLD["❌ OLD hierarchical model (DELETED)"]
+        direction TB
+        B["🏢 Building<br/>Id, Name, Address"]
+        F["🪜 Floor<br/>BuildingId, Number"]
+        A["🚪 Apartment<br/>FloorId, Name"]
+        OA["📍 Old Address<br/>BuildingId, FloorId,<br/>ApartmentId, UserId"]
+        AL["🗺️ ApartmentLayout"]
+        DR["🚪 Door"]
+        RL["🛋️ RoomLayout"]
+
+        B --> F --> A --> OA
+        A -.-> AL
+        AL -.-> DR
+        AL -.-> RL
+    end
+
+    subgraph NEW["✅ NEW flat model"]
+        direction TB
+        NA["📍 Address<br/>Type, Lat, Lng,<br/>Phone, Street,<br/>+ type-specific fields"]
+        AT["AddressType<br/>Apartment / House / Office"]
+        NA --> AT
+    end
+
+    OLD ==replaced by==> NEW
+
+    classDef removed fill:#ffcdd2,stroke:#c62828,stroke-width:2px,color:#000
+    classDef kept fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef group fill:#fafafa,stroke:#999,stroke-width:1px
+
+    class B,F,A,OA,AL,DR,RL removed
+    class NA,AT kept
+</pre>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', themeVariables: { fontSize: '14px' }, flowchart: { useMaxWidth: false, htmlLabels: true } });
+</script>
+</body>
+</html>

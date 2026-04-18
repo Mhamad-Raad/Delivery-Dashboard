@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Address Validation by Type</title>
+<style>
+  body { margin: 0; padding: 40px; background: #fafafa; font-family: -apple-system, Segoe UI, sans-serif; }
+  h1 { margin: 0 0 8px; color: #222; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 14px; }
+  #diagram { background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+<h1>Address Validation — Required Fields by Type</h1>
+<div class="sub">Green = required, gray = optional, blank = not applicable.</div>
+<div id="diagram">
+<pre class="mermaid">
+graph TB
+    Start(["📝 Create / Update Address"]) --> Common["<b>ALWAYS REQUIRED</b><br/>━━━━━━━━━━━━━━<br/>✅ Latitude<br/>✅ Longitude<br/>✅ PhoneNumber<br/>✅ Street<br/>✅ Type"]
+
+    Common --> Gate{"Type = ?"}
+
+    Gate -->|Apartment| AP["<b>🏢 APARTMENT</b><br/>━━━━━━━━━━━<br/>✅ BuildingName<br/>✅ Floor<br/>✅ ApartmentNumber<br/>⚪ Label<br/>⚪ AdditionalDirections"]
+
+    Gate -->|House| HS["<b>🏠 HOUSE</b><br/>━━━━━━━━━━━<br/>✅ HouseName OR HouseNumber<br/>⚪ Floor (optional)<br/>⚪ Label<br/>⚪ AdditionalDirections"]
+
+    Gate -->|Office| OF["<b>🏬 OFFICE</b><br/>━━━━━━━━━━━<br/>✅ BuildingName<br/>✅ CompanyName<br/>✅ Floor<br/>⚪ Label<br/>⚪ AdditionalDirections"]
+
+    AP --> RoleGate{"User role?"}
+    HS --> RoleGate
+    OF --> RoleGate
+
+    RoleGate -->|SuperAdmin / Admin| Reject["❌ Rejected<br/>(admins cannot own addresses)"]
+    RoleGate -->|Customer / Vendor / Driver / VendorStaff| Saved["✅ Saved to DB<br/>IsDefault rules enforced"]
+
+    classDef start fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef required fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef type fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    classDef gate fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#000
+    classDef ok fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef bad fill:#ffcdd2,stroke:#c62828,stroke-width:2px,color:#000
+
+    class Start start
+    class Common required
+    class AP,HS,OF type
+    class Gate,RoleGate gate
+    class Saved ok
+    class Reject bad
+</pre>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', themeVariables: { fontSize: '14px' }, flowchart: { useMaxWidth: false, htmlLabels: true } });
+</script>
+</body>
+</html>
