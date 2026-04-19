@@ -53,8 +53,8 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Tenant,SuperAdmin,Admin")]
-        [EndpointDescription("Retrieves detailed information for a specific support ticket by ID. Returns ticket details including subject, description, status, category, images, and creation date. Tenants can only view their own tickets, while Admins can view all tickets. Restricted to Tenant, SuperAdmin, and Admin roles.")]
+        [Authorize(Roles = "Customer,SuperAdmin,Admin")]
+        [EndpointDescription("Retrieves detailed information for a specific support ticket by ID. Returns ticket details including subject, description, status, category, images, and creation date. Customers can only view their own tickets, while Admins can view all tickets. Restricted to Customer, SuperAdmin, and Admin roles.")]
         public async Task<IActionResult> GetTicketById(int id)
         {
             var userId = _currentUserService.GetCurrentUserId();
@@ -65,8 +65,8 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpGet("my-tickets")]
-        [Authorize(Roles = "Tenant, SuperAdmin,Admin")]
-        [EndpointDescription("Retrieves a paginated list of support tickets created by the authenticated user. Supports filtering by ticket status (Open, InProgress, Resolved, Closed) and priority (Low, Medium, High, Urgent). Returns ticket summaries with status and creation date. Restricted to Tenant, SuperAdmin, and Admin roles.")]
+        [Authorize(Roles = "Customer, SuperAdmin,Admin")]
+        [EndpointDescription("Retrieves a paginated list of support tickets created by the authenticated user. Supports filtering by ticket status (Open, InProgress, Resolved, Closed) and priority (Low, Medium, High, Urgent). Returns ticket summaries with status and creation date. Restricted to Customer, SuperAdmin, and Admin roles.")]
         public async Task<IActionResult> GetMyTickets(
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,

@@ -9,6 +9,6 @@ namespace DeliveryDash.Application.Abstracts.IService
         string? GetUserAgent();
         Task<int?> GetCurrentVendorIdAsync();
         Task<int?> GetCurrentStaffVendorIdAsync();
-        Task<int?> GetCurrentTenantIdAsync();
+        Task<int?> GetCurrentCustomerIdAsync();
     }
 }

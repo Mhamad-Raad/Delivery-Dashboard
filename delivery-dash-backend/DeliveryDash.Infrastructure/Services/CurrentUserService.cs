@@ -75,7 +75,7 @@ namespace DeliveryDash.Infrastructure.Services
             return staff?.VendorId;
         }
 
-        public async Task<int?> GetCurrentTenantIdAsync()
+        public async Task<int?> GetCurrentCustomerIdAsync()
         {
             // Future implementation
             return null;

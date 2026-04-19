@@ -1,42 +1,25 @@
-using DeliveryDash.Domain.Common;
 using DeliveryDash.Domain.Enums;
 
-namespace DeliveryDash.Domain.Entities
+namespace DeliveryDash.Application.Requests.AddressRequests
 {
-    public class Address : AuditableEntity
+    public class CreateAddressRequest
     {
-        public int Id { get; set; }
-        public Guid UserId { get; set; }
-
         public AddressType Type { get; set; }
-
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-
         public string PhoneNumber { get; set; } = string.Empty;
         public string Street { get; set; } = string.Empty;
 
-        // Apartment + Office
         public string? BuildingName { get; set; }
-
-        // Apartment + Office (required); House (optional)
         public string? Floor { get; set; }
-
-        // Apartment only
         public string? ApartmentNumber { get; set; }
-
-        // House only (at least one of HouseName / HouseNumber required)
         public string? HouseName { get; set; }
         public string? HouseNumber { get; set; }
-
-        // Office only
         public string? CompanyName { get; set; }
 
         public string? AdditionalDirections { get; set; }
         public string? Label { get; set; }
 
         public bool IsDefault { get; set; }
-
-        public User User { get; set; } = null!;
     }
 }

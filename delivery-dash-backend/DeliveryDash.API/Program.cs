@@ -159,7 +159,6 @@ builder.Services.AddScoped<IAuthTokenProcessor, AuthTokenProcessor>();
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -177,7 +176,7 @@ builder.Services.AddScoped<IOrderAssignmentRepository, OrderAssignmentRepository
 
 // Services
 builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddScoped<IBuildingService, BuildingService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();

@@ -34,9 +34,9 @@ namespace DeliveryDash.Infrastructure.Configurations
                 },
                 new()
                 {
-                    Id = IdentityRoleConstant.TenantsRoleGuid,
-                    Name = IdentityRoleConstant.Tenant,
-                    NormalizedName = IdentityRoleConstant.Tenant.ToUpper(),
+                    Id = IdentityRoleConstant.CustomerRoleGuid,
+                    Name = IdentityRoleConstant.Customer,
+                    NormalizedName = IdentityRoleConstant.Customer.ToUpper(),
                     ConcurrencyStamp = "6dc9dea8-7375-4a4d-b35b-8b18670eb407"
                 },
                 new()

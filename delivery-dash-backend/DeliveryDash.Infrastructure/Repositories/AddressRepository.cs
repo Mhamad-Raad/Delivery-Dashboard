@@ -16,54 +16,23 @@ namespace DeliveryDash.Infrastructure.Repositories
         public async Task<Address?> GetByIdAsync(int id)
         {
             return await _context.Addresses
-                .Include(a => a.Building)
-                .Include(a => a.Floor)
-                .Include(a => a.Apartment)
-                .Include(a => a.User)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        public async Task<Address?> GetByUserIdAsync(Guid userId)
+        public async Task<List<Address>> GetByUserIdAsync(Guid userId)
         {
             return await _context.Addresses
-                .Include(a => a.Building)
-                .Include(a => a.Floor)
-                .Include(a => a.Apartment)
-                .FirstOrDefaultAsync(a => a.UserId == userId);
-        }
-
-        public async Task<Address?> GetByApartmentIdAsync(int apartmentId)
-        {
-            return await _context.Addresses
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.ApartmentId == apartmentId);
-        }
-
-        public async Task<List<Address>> GetByUserIdsAsync(IEnumerable<Guid> userIds)
-        {
-            return await _context.Addresses
-                .Include(a => a.Building)
-                .Include(a => a.Floor)
-                .Include(a => a.Apartment)
                 .AsNoTracking()
-                .Where(a => a.UserId != null && userIds.Contains(a.UserId.Value))
-                .ToListAsync();
-        }
-
-        public async Task<List<Address>> GetByBuildingIdAsync(int buildingId)
-        {
-            return await _context.Addresses
-                .Include(a => a.User)
-                .Include(a => a.Floor)
-                .Include(a => a.Apartment)
-                .AsNoTracking()
-                .Where(a => a.BuildingId == buildingId)
+                .Where(a => a.UserId == userId)
+                .OrderByDescending(a => a.IsDefault)
+                .ThenByDescending(a => a.CreatedAt)
                 .ToListAsync();
         }
 
         public async Task<Address> CreateAsync(Address address)
         {
-            await _context.Addresses.AddAsync(address);
+            _context.Addresses.Add(address);
             await _context.SaveChangesAsync();
             return address;
         }
@@ -83,6 +52,13 @@ namespace DeliveryDash.Infrastructure.Repositories
                 _context.Addresses.Remove(address);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task ClearDefaultForUserAsync(Guid userId)
+        {
+            await _context.Addresses
+                .Where(a => a.UserId == userId && a.IsDefault)
+                .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
         }
     }
 }

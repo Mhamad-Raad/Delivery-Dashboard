@@ -87,24 +87,6 @@ namespace DeliveryDash.Infrastructure.Repositories
                 );
             }
 
-            // Filter by building name search
-            if (!string.IsNullOrWhiteSpace(buildingNameSearch))
-            {
-                var escapedBuildingName = EscapeLikePattern(buildingNameSearch.Trim());
-                var buildingSearchPattern = $"%{escapedBuildingName}%";
-
-                query = query.Where(u =>
-                    _context.Addresses
-                        .Where(a => a.UserId == u.Id && a.BuildingId != null)
-                        .Join(
-                            _context.Buildings,
-                            a => a.BuildingId.Value,
-                            b => b.Id,
-                            (a, b) => b.Name)
-                        .Any(name => EF.Functions.ILike(name, buildingSearchPattern))
-                );
-            }
-
             // Search filter
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -241,7 +223,7 @@ namespace DeliveryDash.Infrastructure.Repositories
                 Role.SuperAdmin => "SuperAdmin",
                 Role.Admin => "Admin",
                 Role.Vendor => "Vendor",
-                Role.Tenant => "Tenant",
+                Role.Customer => "Customer",
                 Role.Driver => "VendorDriver",
                 _ => throw new ArgumentOutOfRangeException(nameof(role), role, "Invalid role provided"),
             };

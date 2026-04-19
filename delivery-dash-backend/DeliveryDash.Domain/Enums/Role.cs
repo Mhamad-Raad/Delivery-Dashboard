@@ -11,7 +11,7 @@ namespace DeliveryDash.Domain.Enums
         SuperAdmin = 0,
         Admin = 1,
         Vendor = 2,
-        Tenant = 3,
+        Customer = 3,
         Driver = 4,
         VendorStaff = 5,
     }

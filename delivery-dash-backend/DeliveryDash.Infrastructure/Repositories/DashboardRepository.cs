@@ -23,24 +23,11 @@ namespace DeliveryDash.Infrastructure.Repositories
             return await _context.Vendors.CountAsync();
         }
 
-        public async Task<int> GetTotalBuildingsCountAsync()
-        {
-            return await _context.Buildings.CountAsync();
-        }
+        public Task<int> GetTotalBuildingsCountAsync() => Task.FromResult(0);
 
-        public async Task<int> GetTotalApartmentsCountAsync()
-        {
-            return await _context.Apartments.CountAsync();
-        }
+        public Task<int> GetTotalApartmentsCountAsync() => Task.FromResult(0);
 
-        public async Task<int> GetOccupiedApartmentsCountAsync()
-        {
-            return await _context.Addresses
-                .Where(a => a.ApartmentId != null)
-                .Select(a => a.ApartmentId)
-                .Distinct()
-                .CountAsync();
-        }
+        public Task<int> GetOccupiedApartmentsCountAsync() => Task.FromResult(0);
 
         public async Task<int> GetTotalProductsCountAsync()
         {

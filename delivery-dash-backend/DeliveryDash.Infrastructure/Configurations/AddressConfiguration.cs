@@ -10,46 +10,34 @@ namespace DeliveryDash.Infrastructure.Configurations
         {
             builder.HasKey(a => a.Id);
 
-            // Relationships
-            builder.HasOne(a => a.Building)
-                .WithMany(b => b.Addresses)
-                .HasForeignKey(a => a.BuildingId)
-                .OnDelete(DeleteBehavior.SetNull);
+            builder.Property(a => a.Type).IsRequired();
+            builder.Property(a => a.Latitude).IsRequired();
+            builder.Property(a => a.Longitude).IsRequired();
 
-            builder.HasOne(a => a.Floor)
-                .WithMany(f => f.Addresses)
-                .HasForeignKey(a => a.FloorId)
-                .OnDelete(DeleteBehavior.SetNull);
+            builder.Property(a => a.PhoneNumber).IsRequired().HasMaxLength(30);
+            builder.Property(a => a.Street).IsRequired().HasMaxLength(255);
 
-            builder.HasOne(a => a.Apartment)
-                .WithMany(ap => ap.Addresses)
-                .HasForeignKey(a => a.ApartmentId)
-                .OnDelete(DeleteBehavior.SetNull);
+            builder.Property(a => a.BuildingName).HasMaxLength(255);
+            builder.Property(a => a.Floor).HasMaxLength(50);
+            builder.Property(a => a.ApartmentNumber).HasMaxLength(50);
+            builder.Property(a => a.HouseName).HasMaxLength(255);
+            builder.Property(a => a.HouseNumber).HasMaxLength(50);
+            builder.Property(a => a.CompanyName).HasMaxLength(255);
+            builder.Property(a => a.AdditionalDirections).HasMaxLength(500);
+            builder.Property(a => a.Label).HasMaxLength(50);
 
             builder.HasOne(a => a.User)
                 .WithMany()
                 .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Indexes
-            builder.HasIndex(a => a.BuildingId);
-            builder.HasIndex(a => a.FloorId);
-            builder.HasIndex(a => a.ApartmentId);
-            builder.HasIndex(a => a.UserId).IsUnique();
-            
-            builder.HasIndex(a => new { a.BuildingId, a.FloorId, a.ApartmentId });
+            builder.HasIndex(a => a.UserId);
 
-            builder.HasIndex(a => new { a.UserId, a.BuildingId })
-                .HasDatabaseName("IX_Addresses_UserId_BuildingId")
-                .HasFilter("\"UserId\" IS NOT NULL AND \"BuildingId\" IS NOT NULL");
-
+            // Partial unique index — at most one default address per user
             builder.HasIndex(a => a.UserId)
-                .HasDatabaseName("IX_Addresses_UserId")
-                .HasFilter("\"UserId\" IS NOT NULL");
-
-            builder.HasIndex(a => a.BuildingId)
-                .HasDatabaseName("IX_Addresses_BuildingId")
-                .HasFilter("\"BuildingId\" IS NOT NULL");
+                .HasDatabaseName("IX_Addresses_UserId_IsDefault")
+                .HasFilter("\"IsDefault\" = true")
+                .IsUnique();
         }
     }
 }

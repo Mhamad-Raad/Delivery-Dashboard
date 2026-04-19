@@ -1,6 +1,5 @@
 ﻿using DeliveryDash.Domain.Exceptions;
 using DeliveryDash.Domain.Exceptions.AddressExceptions;
-using DeliveryDash.Domain.Exceptions.BuildingExceptions;
 using DeliveryDash.Domain.Exceptions.UserExceptions;
 using DeliveryDash.Domain.Exceptions.VendorExceptions;
 using DeliveryDash.Domain.Exceptions.ProductExceptions;
@@ -56,26 +55,12 @@ namespace DeliveryDash.API.Handlers
                 UserDeletionFailedException => (HttpStatusCode.Conflict, exception.Message, null),
                 UserUpdateFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
 
-                // Building-related
-                BuildingNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
-                FloorNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
-                ApartmentNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
-                DuplicateBuildingNameException => (HttpStatusCode.Conflict, exception.Message, null),
-                BuildingCreationFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
-                BuildingUpdateFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
-                BuildingDeletionFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
-
                 // Address-related
                 AddressNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
-                ApartmentAlreadyOccupiedException => (HttpStatusCode.Conflict, exception.Message, null),
-                AddressAssignmentFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
-                AddressUnassignmentFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
+                AdminsCannotOwnAddressException => (HttpStatusCode.Forbidden, exception.Message, null),
                 AddressCreationFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
                 AddressUpdateFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
                 AddressDeletionFailedException => (HttpStatusCode.UnprocessableEntity, exception.Message, null),
-
-                // Floor-related
-                DuplicateFloorNumberException => (HttpStatusCode.Conflict, exception.Message, null),
 
                 // Vendor-related
                 VendorNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),

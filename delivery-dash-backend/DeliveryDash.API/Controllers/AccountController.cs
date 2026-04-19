@@ -162,7 +162,7 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "SuperAdmin,Admin, Tenant")]
+        [Authorize(Roles = "SuperAdmin,Admin, Customer")]
         [RequestSizeLimit(5 * 1024 * 1024)]
         [EndpointDescription("Updates a user's information by ID. Accepts multipart form data with updated user details and an optional new profile image (max 5MB). Previous image is automatically deleted when replaced. Can update user role.")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromForm] UpdateUserRequest request, IFormFile? ProfileImageUrl)

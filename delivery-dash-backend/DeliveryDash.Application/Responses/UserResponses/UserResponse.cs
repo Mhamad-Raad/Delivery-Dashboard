@@ -10,9 +10,6 @@ namespace DeliveryDash.Application.Responses.UserResponses
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public Role Role { get; set; }
-        public string? BuildingName { get; set; }
-        public int? FloorNumber { get; set; }
-        public string? ApartmentName { get; set; }
         public string? ProfileImageUrl { get; set; }
     }
 }

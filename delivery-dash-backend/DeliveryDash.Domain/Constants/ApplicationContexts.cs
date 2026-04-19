@@ -5,7 +5,7 @@ namespace DeliveryDash.Domain.Constants
         public const string SuperAdminDashboard = "superadmin_dashboard";
         public const string AdminDashboard = "admin_dashboard";
         public const string VendorPortal = "vendor_portal";
-        public const string TenantPortal = "tenant_portal";
+        public const string CustomerPortal = "customer_portal";
         public const string DriverPortal = "driver_portal";
 
         public static readonly Dictionary<string, string[]> ContextRoleMap = new()
@@ -13,7 +13,7 @@ namespace DeliveryDash.Domain.Constants
             { SuperAdminDashboard, [IdentityRoleConstant.SuperAdmin] },
             { AdminDashboard, [IdentityRoleConstant.SuperAdmin, IdentityRoleConstant.Admin] },
             { VendorPortal, [IdentityRoleConstant.Vendor, IdentityRoleConstant.VendorStaff] },
-            { TenantPortal, [IdentityRoleConstant.Tenant] },
+            { CustomerPortal, [IdentityRoleConstant.Customer] },
             { DriverPortal, [IdentityRoleConstant.Driver] }
         };
 

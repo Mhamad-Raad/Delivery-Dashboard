@@ -102,7 +102,7 @@ namespace DeliveryDash.Application.Services
                 Role.SuperAdmin => "Super Admin",
                 Role.Admin => "Admin",
                 Role.Vendor => "Vendor",
-                Role.Tenant => "Tenant",
+                Role.Customer => "Customer",
                 Role.Driver => "Driver",
                 _ => "User"
             };
@@ -356,9 +356,6 @@ namespace DeliveryDash.Application.Services
                 ?? throw new InvalidOperationException($"User {user.Email} must have a role assigned.");
             var role = GetRoleFromIdentityRoleName(roleName);
 
-            // Get address info from AddressRepository
-            var address = await _addressRepository.GetByUserIdAsync(userId);
-
             return new UserDetailResponse
             {
                 _id = user.Id,
@@ -367,12 +364,6 @@ namespace DeliveryDash.Application.Services
                 Email = user.Email ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
                 Role = role,
-                BuildingName = address?.Building?.Name,
-                BuildingId = address?.BuildingId,
-                FloorNumber = address?.Floor?.FloorNumber,
-                FloorId = address?.FloorId,
-                ApartmentName = address?.Apartment?.ApartmentName,
-                ApartmentId = address?.ApartmentId,
                 ProfileImageUrl = user.ProfileImageUrl
             };
         }
@@ -537,10 +528,6 @@ namespace DeliveryDash.Application.Services
             var userList = users.ToList();
             var userIds = userList.Select(u => u.Id).ToList();
 
-            // Batch load addresses in ONE query
-            var addresses = await _addressRepository.GetByUserIdsAsync(userIds);
-            var addressLookup = addresses.ToDictionary(a => a.UserId!.Value);
-
             // Batch load all roles in ONE query via repository
             var userRoles = await _userRepository.GetUserRolesDictionaryAsync(userIds);
 
@@ -562,9 +549,6 @@ namespace DeliveryDash.Application.Services
 
                 var roleEnum = GetRoleFromIdentityRoleName(roleName);
 
-                // Get address from lookup
-                addressLookup.TryGetValue(user.Id, out var address);
-
                 userResponses.Add(new UserResponse
                 {
                     _id = user.Id,
@@ -573,9 +557,6 @@ namespace DeliveryDash.Application.Services
                     Email = user.Email ?? string.Empty,
                     PhoneNumber = user.PhoneNumber,
                     Role = roleEnum,
-                    BuildingName = address?.Building?.Name,
-                    FloorNumber = address?.Floor?.FloorNumber,
-                    ApartmentName = address?.Apartment?.ApartmentName,
                     ProfileImageUrl = user.ProfileImageUrl
                 });
             }
@@ -596,7 +577,7 @@ namespace DeliveryDash.Application.Services
                 Role.SuperAdmin => IdentityRoleConstant.SuperAdmin,
                 Role.Admin => IdentityRoleConstant.Admin,
                 Role.Vendor => IdentityRoleConstant.Vendor,
-                Role.Tenant => IdentityRoleConstant.Tenant,
+                Role.Customer => IdentityRoleConstant.Customer,
                 Role.Driver => IdentityRoleConstant.Driver,
                 Role.VendorStaff => IdentityRoleConstant.VendorStaff,
                 _ => throw new ArgumentOutOfRangeException(nameof(role), role, $"Provided role is not supported"),
@@ -610,7 +591,7 @@ namespace DeliveryDash.Application.Services
                 IdentityRoleConstant.SuperAdmin => Role.SuperAdmin,
                 IdentityRoleConstant.Admin => Role.Admin,
                 IdentityRoleConstant.Vendor => Role.Vendor,
-                IdentityRoleConstant.Tenant => Role.Tenant,
+                IdentityRoleConstant.Customer => Role.Customer,
                 IdentityRoleConstant.Driver => Role.Driver,
                 IdentityRoleConstant.VendorStaff => Role.VendorStaff,
                 _ => throw new ArgumentOutOfRangeException(nameof(roleName), roleName, $"Provided role name is not supported"),

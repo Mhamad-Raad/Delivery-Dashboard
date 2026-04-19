@@ -33,8 +33,8 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Tenant")]
-        [EndpointDescription("Creates a new order for the authenticated tenant. Accepts order details including vendor ID, products with quantities, delivery address, and optional notes. Calculates subtotal, delivery fee, and total amount. Triggers order notifications to the vendor. Restricted to Tenant role.")]
+        [Authorize(Roles = "Customer")]
+        [EndpointDescription("Creates a new order for the authenticated tenant. Accepts order details including vendor ID, products with quantities, delivery address, and optional notes. Calculates subtotal, delivery fee, and total amount. Triggers order notifications to the vendor. Restricted to Customer role.")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
             var userId = _currentUserService.GetCurrentUserId();
@@ -43,7 +43,7 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [EndpointDescription("Retrieves detailed information for a specific order by ID. Returns order details including items, pricing, status, delivery address, and customer information. Access is role-based: Tenants see only their orders, Vendors see their vendor's orders, Admins see all orders. Requires authentication.")]
+        [EndpointDescription("Retrieves detailed information for a specific order by ID. Returns order details including items, pricing, status, delivery address, and customer information. Access is role-based: Customers see only their orders, Vendors see their vendor's orders, Admins see all orders. Requires authentication.")]
         public async Task<IActionResult> GetOrderById(int id)
         {
             var userId = _currentUserService.GetCurrentUserId();
@@ -65,7 +65,7 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpGet]
-        [EndpointDescription("Retrieves a paginated list of orders with optional filtering by status, vendorId, and date. Returns different order sets based on user role: Tenants see their orders, Vendors see their vendor's orders, Admins/SuperAdmins see all orders and can filter by vendorId. Supports pagination and filtering by order status (Pending, Confirmed, Preparing, etc.), date range (fromDate/toDate), or specific date. The vendorId filter is only available to SuperAdmin and Admin roles. Requires authentication.")]
+        [EndpointDescription("Retrieves a paginated list of orders with optional filtering by status, vendorId, and date. Returns different order sets based on user role: Customers see their orders, Vendors see their vendor's orders, Admins/SuperAdmins see all orders and can filter by vendorId. Supports pagination and filtering by order status (Pending, Confirmed, Preparing, etc.), date range (fromDate/toDate), or specific date. The vendorId filter is only available to SuperAdmin and Admin roles. Requires authentication.")]
         public async Task<IActionResult> GetOrders(
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
@@ -109,7 +109,7 @@ namespace DeliveryDash.API.Controllers
         }
 
         [HttpPost("{id}/cancel")]
-        [EndpointDescription("Cancels an existing order. Tenants can cancel their own orders before they are confirmed. Admins can cancel any order. Updates order status to Cancelled and sends cancellation notifications to relevant parties. Requires authentication.")]
+        [EndpointDescription("Cancels an existing order. Customers can cancel their own orders before they are confirmed. Admins can cancel any order. Updates order status to Cancelled and sends cancellation notifications to relevant parties. Requires authentication.")]
         public async Task<IActionResult> CancelOrder(int id)
         {
             var userId = _currentUserService.GetCurrentUserId();
@@ -135,7 +135,7 @@ namespace DeliveryDash.API.Controllers
                 "SuperAdmin" => Role.SuperAdmin,
                 "Admin" => Role.Admin,
                 "Vendor" => Role.Vendor,
-                "Tenant" => Role.Tenant,
+                "Customer" => Role.Customer,
                 "Driver" => Role.Driver,
                 _ => throw new InvalidOperationException($"Unknown role: {roleName}")
             };

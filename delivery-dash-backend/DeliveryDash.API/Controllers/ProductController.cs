@@ -52,7 +52,7 @@ namespace DeliveryDash.API.Controllers
         [HttpGet("tenant")]
         [AllowAnonymous]
         [EndpointDescription("Retrieves a paginated list of products specifically for tenant browsing. Identical functionality to GetAllProducts with same filtering options. Provides a dedicated endpoint for customer-facing product catalogs. Public endpoint - no authentication required.")]
-        public async Task<IActionResult> GetAllProductsTenants(
+        public async Task<IActionResult> GetAllProductsCustomers(
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] int? vendorId = null,

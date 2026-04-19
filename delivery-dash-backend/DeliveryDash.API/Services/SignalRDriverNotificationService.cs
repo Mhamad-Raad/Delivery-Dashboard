@@ -37,9 +37,18 @@ namespace DeliveryDash.API.Services
                 VendorName = order.Vendor?.Name,
                 DeliveryAddress = order.DeliveryAddress != null ? new
                 {
-                    Building = order.DeliveryAddress.Building?.Name,
-                    Floor = order.DeliveryAddress.Floor?.FloorNumber,
-                    Apartment = order.DeliveryAddress.Apartment?.ApartmentName
+                    Type = order.DeliveryAddress.Type,
+                    Latitude = order.DeliveryAddress.Latitude,
+                    Longitude = order.DeliveryAddress.Longitude,
+                    Street = order.DeliveryAddress.Street,
+                    BuildingName = order.DeliveryAddress.BuildingName,
+                    Floor = order.DeliveryAddress.Floor,
+                    ApartmentNumber = order.DeliveryAddress.ApartmentNumber,
+                    HouseName = order.DeliveryAddress.HouseName,
+                    HouseNumber = order.DeliveryAddress.HouseNumber,
+                    CompanyName = order.DeliveryAddress.CompanyName,
+                    Phone = order.DeliveryAddress.PhoneNumber,
+                    Directions = order.DeliveryAddress.AdditionalDirections
                 } : null,
                 TotalAmount = order.TotalAmount,
                 TimeoutSeconds = timeoutSeconds,

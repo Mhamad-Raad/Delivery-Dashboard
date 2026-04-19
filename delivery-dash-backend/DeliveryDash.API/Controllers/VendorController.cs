@@ -79,7 +79,7 @@ namespace DeliveryDash.API.Controllers
         [HttpGet("tenant")]
         [AllowAnonymous]
         [EndpointDescription("Public endpoint for tenants to browse available vendors. Returns a paginated list of vendors with optional filtering by name and type. No authentication required.")]
-        public async Task<IActionResult> GetAllVendorsTenant(
+        public async Task<IActionResult> GetAllVendorsCustomer(
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] string? searchName = null,

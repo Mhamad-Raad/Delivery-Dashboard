@@ -13,9 +13,6 @@ namespace DeliveryDash.Infrastructure
 
         // DbSets for entities
         public DbSet<Address> Addresses { get; set; }
-        public DbSet<Building> Buildings { get; set; }
-        public DbSet<Floor> Floors { get; set; }
-        public DbSet<Apartment> Apartments { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<VendorStaff> VendorStaff { get; set; }
         public DbSet<Product> Products { get; set; }

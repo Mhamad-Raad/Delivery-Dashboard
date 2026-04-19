@@ -148,13 +148,14 @@ namespace DeliveryDash.Application.Services
 
             await ValidateOrderAccessAsync(order, userId, userRole, vendorId);
 
-            // If order has no delivery address, get the user's address
+            // If order has no delivery address, fall back to the user's default address
             if (order.DeliveryAddress == null)
             {
-                var userAddress = await _addressRepository.GetByUserIdAsync(order.UserId);
-                if (userAddress != null)
+                var userAddresses = await _addressRepository.GetByUserIdAsync(order.UserId);
+                var fallbackAddress = userAddresses.FirstOrDefault();
+                if (fallbackAddress != null)
                 {
-                    order.DeliveryAddress = userAddress;
+                    order.DeliveryAddress = fallbackAddress;
                 }
             }
 
@@ -188,7 +189,7 @@ namespace DeliveryDash.Application.Services
             IEnumerable<int>? filterOrderIds = null;
 
             // Apply role-based filtering
-            if (userRole == Role.Tenant)
+            if (userRole == Role.Customer)
             {
                 filterUserId = userId;
             }
@@ -231,7 +232,7 @@ namespace DeliveryDash.Application.Services
                 throw new OrderNotFoundException(id);
 
             // Only vendors and admins can update status
-            if (userRole == Role.Tenant)
+            if (userRole == Role.Customer)
                 throw new UnauthorizedOrderAccessException();
 
             if (userRole == Role.Vendor)
@@ -305,7 +306,7 @@ namespace DeliveryDash.Application.Services
                 throw new OrderNotFoundException(id);
 
             // Users can only cancel their own orders
-            if (userRole == Role.Tenant && order.UserId != userId)
+            if (userRole == Role.Customer && order.UserId != userId)
                 throw new UnauthorizedOrderAccessException();
 
             // Can only cancel pending or confirmed orders
@@ -349,7 +350,7 @@ namespace DeliveryDash.Application.Services
             if (userRole == Role.SuperAdmin || userRole == Role.Admin)
                 return;
 
-            if (userRole == Role.Tenant && order.UserId != userId)
+            if (userRole == Role.Customer && order.UserId != userId)
                 throw new UnauthorizedOrderAccessException();
 
             if (userRole == Role.Vendor)
@@ -420,9 +421,19 @@ namespace DeliveryDash.Application.Services
                 DeliveryAddress = order.DeliveryAddress != null ? new DeliveryAddressInfo
                 {
                     Id = order.DeliveryAddress.Id,
-                    BuildingName = order.DeliveryAddress.Building?.Name,
-                    FloorNumber = order.DeliveryAddress.Floor?.FloorNumber,
-                    ApartmentName = order.DeliveryAddress.Apartment?.ApartmentName
+                    Type = order.DeliveryAddress.Type,
+                    Latitude = order.DeliveryAddress.Latitude,
+                    Longitude = order.DeliveryAddress.Longitude,
+                    Street = order.DeliveryAddress.Street,
+                    PhoneNumber = order.DeliveryAddress.PhoneNumber,
+                    BuildingName = order.DeliveryAddress.BuildingName,
+                    Floor = order.DeliveryAddress.Floor,
+                    ApartmentNumber = order.DeliveryAddress.ApartmentNumber,
+                    HouseName = order.DeliveryAddress.HouseName,
+                    HouseNumber = order.DeliveryAddress.HouseNumber,
+                    CompanyName = order.DeliveryAddress.CompanyName,
+                    AdditionalDirections = order.DeliveryAddress.AdditionalDirections,
+                    Label = order.DeliveryAddress.Label
                 } : null,
                 Subtotal = order.Subtotal,
                 DeliveryFee = order.DeliveryFee,
