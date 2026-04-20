@@ -175,5 +175,19 @@
     "cafe": "مقهى",
     "pharmacy": "صيدلية",
     "other": "أخرى"
+  },
+  "productCategories": {
+    "title": "فئات المنتجات",
+    "subtitle": "أقسام القائمة التي أنشأها هذا البائع",
+    "totalCategories": "{{count}} فئات",
+    "totalCategories_one": "{{count}} فئة",
+    "totalProducts": "{{count}} منتجات",
+    "totalProducts_one": "{{count}} منتج",
+    "productsCount": "{{count}} منتجات",
+    "productsCount_one": "{{count}} منتج",
+    "noDescription": "بدون وصف",
+    "emptyTitle": "لا توجد فئات بعد",
+    "emptyDescription": "لم ينشئ هذا البائع أي أقسام قائمة. يدير البائع الفئات من لوحة التحكم الخاصة به.",
+    "errorLoad": "فشل تحميل فئات منتجات هذا البائع."
   }
 }

@@ -175,5 +175,19 @@
     "cafe": "کافێ",
     "pharmacy": "دەرمانخانە",
     "other": "هیتر"
+  },
+  "productCategories": {
+    "title": "جۆرەکانی بەرهەم",
+    "subtitle": "بەشەکانی مێنیو کە ئەم فرۆشیارە دروستی کردووە",
+    "totalCategories": "{{count}} جۆر",
+    "totalCategories_one": "{{count}} جۆر",
+    "totalProducts": "{{count}} بەرهەم",
+    "totalProducts_one": "{{count}} بەرهەم",
+    "productsCount": "{{count}} بەرهەم",
+    "productsCount_one": "{{count}} بەرهەم",
+    "noDescription": "بێ وەسف",
+    "emptyTitle": "هیچ جۆرێک نییە",
+    "emptyDescription": "ئەم فرۆشیارە هیچ بەشی مێنیوی دروست نەکردووە. فرۆشیار جۆرەکان لە داشبۆردی خۆیدا بەڕێوە دەبات.",
+    "errorLoad": "بارکردنی جۆرەکانی بەرهەمی ئەم فرۆشیارە سەرکەوتوو نەبوو."
   }
 }

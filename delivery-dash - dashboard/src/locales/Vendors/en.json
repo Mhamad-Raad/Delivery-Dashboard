@@ -175,5 +175,19 @@
     "cafe": "Cafe",
     "pharmacy": "Pharmacy",
     "other": "Other"
+  },
+  "productCategories": {
+    "title": "Product Categories",
+    "subtitle": "Menu sections this vendor has created",
+    "totalCategories": "{{count}} categories",
+    "totalCategories_one": "{{count}} category",
+    "totalProducts": "{{count}} products",
+    "totalProducts_one": "{{count}} product",
+    "productsCount": "{{count}} products",
+    "productsCount_one": "{{count}} product",
+    "noDescription": "No description",
+    "emptyTitle": "No categories yet",
+    "emptyDescription": "This vendor hasn't created any menu sections. Categories are managed by the vendor from their own dashboard.",
+    "errorLoad": "Failed to load this vendor's product categories."
   }
 }

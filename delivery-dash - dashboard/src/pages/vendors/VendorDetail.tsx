@@ -23,6 +23,7 @@ import VendorPhotoUpload from '@/components/Vendors/VendorPhotoUpload';
 import VendorBasicInfo from '@/components/Vendors/VendorBasicInfo';
 import VendorWorkingHours from '@/components/Vendors/VendorWorkingHours';
 import VendorUserAssignment from '@/components/Vendors/VendorUserAssignment';
+import VendorProductCategories from '@/components/Vendors/VendorProductCategories';
 import { compressImage } from '@/lib/imageCompression';
 
 const VendorDetail = () => {
@@ -377,6 +378,9 @@ const VendorDetail = () => {
           userProfileImage={vendor?.userProfileImageUrl}
           onUserSelect={handleUserSelect}
         />
+
+        {/* Product Categories (read-only admin view) */}
+        {vendor?._id && <VendorProductCategories vendorId={vendor._id} />}
       </div>
 
       {/* Sticky Footer with Action Buttons */}
