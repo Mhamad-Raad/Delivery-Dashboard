@@ -10,6 +10,7 @@ import {
   FileText,
   ShoppingCart,
   Store,
+  Tags,
   ChevronRight,
   Palette,
   History,
@@ -65,6 +66,11 @@ const mainNavItems = [
     titleKey: 'vendors',
     url: '/vendors',
     icon: Store,
+  },
+  {
+    titleKey: 'vendorCategories',
+    url: '/vendor-categories',
+    icon: Tags,
   },
   {
     titleKey: 'products',

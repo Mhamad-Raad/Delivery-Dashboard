@@ -17,6 +17,10 @@ import vendorsEn from './locales/Vendors/en.json';
 import vendorsAr from './locales/Vendors/ar.json';
 import vendorsKu from './locales/Vendors/ku.json';
 
+import vendorCategoriesEn from './locales/VendorCategories/en.json';
+import vendorCategoriesAr from './locales/VendorCategories/ar.json';
+import vendorCategoriesKu from './locales/VendorCategories/ku.json';
+
 import themesEn from './locales/Themes/en.json';
 import themesAr from './locales/Themes/ar.json';
 import themesKu from './locales/Themes/ku.json';
@@ -53,6 +57,7 @@ i18n.use(initReactI18next).init({
       navbar: navbarEn,
       users: usersEn,
       vendors: vendorsEn,
+      vendorCategories: vendorCategoriesEn,
       themes: themesEn,
       home: homeEn,
       reports: reportsEn,
@@ -67,6 +72,7 @@ i18n.use(initReactI18next).init({
       navbar: navbarAr,
       users: usersAr,
       vendors: vendorsAr,
+      vendorCategories: vendorCategoriesAr,
       themes: themesAr,
       home: homeAr,
       reports: reportsAr,
@@ -81,6 +87,7 @@ i18n.use(initReactI18next).init({
       navbar: navbarKu,
       users: usersKu,
       vendors: vendorsKu,
+      vendorCategories: vendorCategoriesKu,
       themes: themesKu,
       home: homeKu,
       reports: reportsKu,
@@ -98,6 +105,7 @@ i18n.use(initReactI18next).init({
     'navbar',
     'users',
     'vendors',
+    'vendorCategories',
     'themes',
     'home',
     'reports',

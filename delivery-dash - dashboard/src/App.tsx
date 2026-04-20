@@ -11,6 +11,7 @@ import UserDetail from './pages/users/UserDetail';
 import Vendors from './pages/vendors/Vendors';
 import VendorDetail from './pages/vendors/VendorDetail';
 import CreateVendor from './pages/vendors/CreateVendor';
+import VendorCategories from './pages/vendor-categories/VendorCategories';
 import Profile from './pages/Profile';
 import Reports from './pages/Reports';
 import Themes from './pages/settings/Themes';
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
       {
         path: '/vendors/:id',
         element: <VendorDetail />,
+      },
+      {
+        path: '/vendor-categories',
+        element: <VendorCategories />,
       },
       {
         path: '/profile',

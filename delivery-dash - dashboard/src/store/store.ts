@@ -5,6 +5,7 @@ import userReducer from './slices/userSlice';
 
 import vendorsReducer from './slices/vendorsSlice';
 import vendorReducer from './slices/vendorSlice';
+import vendorCategoriesReducer from './slices/vendorCategoriesSlice';
 import meReducer from './slices/meSlice';
 
 import notificationsReducer from './slices/notificationsSlice';
@@ -20,6 +21,7 @@ export const store = configureStore({
     user: userReducer,
     vendors: vendorsReducer,
     vendor: vendorReducer,
+    vendorCategories: vendorCategoriesReducer,
     products: productsReducer,
     notifications: notificationsReducer,
     audit: auditReducer,
@@ -30,4 +32,3 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-
