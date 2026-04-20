@@ -4,6 +4,7 @@ import usersReducer from './slices/usersSlice';
 import userReducer from './slices/userSlice';
 import productsReducer from './slices/productsSlice';
 import productReducer from './slices/productSlice';
+import categoriesReducer from './slices/categoriesSlice';
 import meReducer from './slices/meSlice';
 import vendorReducer from './slices/vendorSlice';
 import notificationsReducer from './slices/notificationsSlice';
@@ -15,6 +16,7 @@ export const store = configureStore({
     user: userReducer,
     products: productsReducer,
     product: productReducer,
+    categories: categoriesReducer,
     me: meReducer,
     vendor: vendorReducer,
     notifications: notificationsReducer,

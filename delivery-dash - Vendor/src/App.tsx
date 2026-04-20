@@ -10,6 +10,7 @@ import UserDetail from './pages/users/UserDetail';
 import Products from './pages/products/Products';
 import CreateProduct from './pages/products/CreateProduct';
 import ProductDetail from './pages/products/ProductDetail';
+import Categories from './pages/categories/Categories';
 
 import Settings from './pages/Settings';
 import Themes from './pages/settings/Themes';
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
       {
         path: '/products/:id',
         element: <ProductDetail />,
+      },
+      {
+        path: '/categories',
+        element: <Categories />,
       },
       {
         path: '/orders',

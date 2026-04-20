@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   ChevronRight,
   Palette,
+  FolderTree,
 } from 'lucide-react';
 
 import { useSelector } from 'react-redux';
@@ -60,6 +61,11 @@ const mainNavItems = [
     titleKey: 'products',
     url: '/products',
     icon: Package,
+  },
+  {
+    titleKey: 'categories',
+    url: '/categories',
+    icon: FolderTree,
   },
   {
     titleKey: 'orders',

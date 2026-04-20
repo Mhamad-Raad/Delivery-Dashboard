@@ -1,0 +1,65 @@
+{
+  "title": "فئات القائمة",
+  "subtitle": "نظّم منتجاتك في أقسام القائمة",
+  "addCategory": "إضافة فئة",
+  "filterCategories": "تصفية الفئات",
+  "searchPlaceholder": "ابحث عن الفئات...",
+  "card": {
+    "productsCount": "{{count}} منتجات",
+    "productsCount_one": "{{count}} منتج",
+    "noDescription": "بدون وصف",
+    "sortOrder": "الترتيب",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "emptyState": {
+    "title": "لا توجد فئات بعد",
+    "description": "أنشئ أقسام قائمة مثل \"البيتزا\" أو \"المشروبات\" أو \"الحلويات\" لتنظيم منتجاتك. المنتجات بدون فئة ستظهر كغير مصنّفة.",
+    "action": "أنشئ أول فئة"
+  },
+  "form": {
+    "createTitle": "إنشاء فئة قائمة",
+    "createSubtitle": "أضف قسمًا جديدًا إلى قائمتك",
+    "editTitle": "تعديل فئة القائمة",
+    "editSubtitle": "حدّث هذه الفئة",
+    "name": "الاسم",
+    "namePlaceholder": "مثال: بيتزا، مشروبات، حلويات",
+    "description": "الوصف",
+    "descriptionPlaceholder": "وصف قصير اختياري يظهر للعملاء",
+    "sortOrder": "ترتيب العرض",
+    "sortOrderHint": "الأرقام الأصغر تظهر أولاً. اترك الحقل فارغًا للترتيب الأبجدي.",
+    "actions": {
+      "create": "إنشاء",
+      "creating": "جاري الإنشاء...",
+      "save": "حفظ التغييرات",
+      "saving": "جاري الحفظ...",
+      "cancel": "إلغاء"
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "nameTooLong": "يجب ألا يتجاوز الاسم 100 حرف",
+      "descriptionTooLong": "يجب ألا يتجاوز الوصف 500 حرف"
+    }
+  },
+  "confirmDelete": {
+    "title": "حذف الفئة",
+    "description": "هل أنت متأكد من حذف هذه الفئة؟",
+    "warning": "المنتجات في هذه الفئة ستصبح غير مصنّفة (لن تُحذف). لا يمكن التراجع عن هذا الإجراء.",
+    "confirm": "حذف",
+    "cancel": "إلغاء"
+  },
+  "success": {
+    "created": "تم إنشاء الفئة",
+    "createdDescription": "{{name}} متاحة الآن لمنتجاتك.",
+    "updated": "تم تحديث الفئة",
+    "updatedDescription": "تم حفظ التغييرات على {{name}}.",
+    "deleted": "تم حذف الفئة",
+    "deletedDescription": "تمت إزالة {{name}}."
+  },
+  "error": {
+    "loadFailed": "فشل تحميل الفئات",
+    "createFailed": "فشل إنشاء الفئة",
+    "updateFailed": "فشل تحديث الفئة",
+    "deleteFailed": "فشل حذف الفئة"
+  }
+}

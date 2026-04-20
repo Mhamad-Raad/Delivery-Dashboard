@@ -1,0 +1,65 @@
+{
+  "title": "Menu Categories",
+  "subtitle": "Organize your products into menu sections",
+  "addCategory": "Add Category",
+  "filterCategories": "Filter Categories",
+  "searchPlaceholder": "Search categories...",
+  "card": {
+    "productsCount": "{{count}} products",
+    "productsCount_one": "{{count}} product",
+    "noDescription": "No description",
+    "sortOrder": "Order",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "emptyState": {
+    "title": "No Categories Yet",
+    "description": "Create menu sections like \"Pizzas\", \"Drinks\", or \"Desserts\" to organize your products. Products without a category will appear as uncategorized.",
+    "action": "Create first category"
+  },
+  "form": {
+    "createTitle": "Create Menu Category",
+    "createSubtitle": "Add a new section to your menu",
+    "editTitle": "Edit Menu Category",
+    "editSubtitle": "Update this category",
+    "name": "Name",
+    "namePlaceholder": "e.g. Pizzas, Drinks, Desserts",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional short description shown to customers",
+    "sortOrder": "Sort Order",
+    "sortOrderHint": "Lower numbers appear first. Leave empty to sort alphabetically.",
+    "actions": {
+      "create": "Create",
+      "creating": "Creating...",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name must be at most 100 characters",
+      "descriptionTooLong": "Description must be at most 500 characters"
+    }
+  },
+  "confirmDelete": {
+    "title": "Delete Category",
+    "description": "Are you sure you want to delete this category?",
+    "warning": "Products in this category will become uncategorized (not deleted). This action cannot be undone.",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "success": {
+    "created": "Category created",
+    "createdDescription": "{{name}} is now available for your products.",
+    "updated": "Category updated",
+    "updatedDescription": "Changes to {{name}} are saved.",
+    "deleted": "Category deleted",
+    "deletedDescription": "{{name}} has been removed."
+  },
+  "error": {
+    "loadFailed": "Failed to load categories",
+    "createFailed": "Failed to create category",
+    "updateFailed": "Failed to update category",
+    "deleteFailed": "Failed to delete category"
+  }
+}

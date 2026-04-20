@@ -262,6 +262,7 @@ const ProductDetail = () => {
         <ProductImageCard
           name={name}
           vendorName={product?.vendorName}
+          vendorId={product?.vendorId}
           productId={id}
           price={price}
           discountPrice={discountPrice}

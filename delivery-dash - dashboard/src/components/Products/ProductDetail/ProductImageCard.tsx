@@ -19,6 +19,7 @@ import { compressImage } from '@/lib/imageCompression';
 interface ProductImageCardProps {
   name: string;
   vendorName?: string;
+  vendorId?: number;
   productId?: string;
   price?: string;
   discountPrice?: string;
@@ -37,6 +38,7 @@ interface ProductImageCardProps {
 const ProductImageCard = ({
   name,
   vendorName,
+  vendorId,
   productId,
   price,
   discountPrice,
@@ -88,14 +90,21 @@ const ProductImageCard = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const loadCategories = useCallback(async (query: string) => {
-    const res = await fetchCategories({ searchName: query, limit: 10 });
-    const data = Array.isArray(res) ? res : res?.data;
-    if (Array.isArray(data)) {
-      return data.map((c: any) => ({ id: c.id, name: c.name }));
-    }
-    return [];
-  }, []);
+  const loadCategories = useCallback(
+    async (query: string) => {
+      const res = await fetchCategories({
+        searchName: query,
+        limit: 10,
+        vendorId,
+      });
+      const data = Array.isArray(res) ? res : res?.data;
+      if (Array.isArray(data)) {
+        return data.map((c: any) => ({ id: c.id, name: c.name }));
+      }
+      return [];
+    },
+    [vendorId]
+  );
 
   return (
     <Card>
