@@ -209,6 +209,7 @@ builder.Services.AddCors(options =>
     {
         policy
            .WithOrigins(
+                "https://delivery-dashboard-sepia.vercel.app",
                 "https://mall-dash.vercel.app",
                 "https://mall-dash-vendor.vercel.app",
                 "https://localhost:5173",
