@@ -1,0 +1,18 @@
+# For local testing of the production-like container before pushing to Render.
+# Usage: docker compose up --build
+# Requires a .env file next to this compose file (see .env.example).
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - uploads:/app/Uploads
+
+volumes:
+  uploads:

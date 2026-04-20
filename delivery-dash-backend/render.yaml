@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: delivery-dash-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    # Auto-deploy on every push to the default branch.
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Development
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      # Secrets — set these in the Render dashboard (envVars without `value` are sync:false by default).
+      - key: ConnectionStrings__DbConnectionString
+        sync: false
+      - key: JwtOptions__SecretKey
+        sync: false
+      - key: ApiKey
+        sync: false
+      - key: Redis__ConnectionString
+        sync: false
+      - key: Email__SmtpPassword
+        sync: false

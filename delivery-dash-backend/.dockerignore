@@ -1,0 +1,32 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/*.suo
+**/*.userprefs
+**/*.publishSettings
+**/PublishProfiles/
+
+# IDE / VCS
+.git/
+.gitignore
+.gitattributes
+.vscode/
+.idea/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Docs and diagrams (not needed in image)
+diagrams/
+*.md
+
+# Uploads (will be created fresh in container)
+DeliveryDash.API/Uploads/
+
+# Local secrets (must be supplied via env vars)
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/*.pfx

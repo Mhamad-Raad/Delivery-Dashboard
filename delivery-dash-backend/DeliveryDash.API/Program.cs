@@ -19,6 +19,7 @@ using DeliveryDash.Infrastructure.Data;
 using DeliveryDash.Infrastructure.Repositories;
 using DeliveryDash.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -311,9 +312,23 @@ if (app.Environment.IsProduction())
 
 app.UseExceptionHandler(options => { }); // Empty options = use registered IExceptionHandler
 
+// Trust X-Forwarded-* from reverse proxy (Render/Fly/etc.) so cookies set Secure correctly
+// and ASP.NET Core sees the real scheme and client IP.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    KnownNetworks = { },
+    KnownProxies = { }
+});
+
 app.UseCors();
 
-app.UseHttpsRedirection();
+// Inside a container the platform terminates TLS; redirecting to HTTPS here breaks health checks.
+var runningInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+if (!runningInContainer)
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 
