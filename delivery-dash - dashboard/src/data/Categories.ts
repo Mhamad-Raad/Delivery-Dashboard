@@ -68,3 +68,20 @@ export const fetchCategoryById = async (id: number) => {
     return toErrorPayload(error);
   }
 };
+
+// Back-compat shim: autocomplete callers expected a paged-response shape
+// ({ data, total, page, limit }). After the category refactor, categories are
+// vendor-scoped — every row in `data` now carries a `vendorId`. Callers that
+// need vendor-scoped results should pass `vendorId` explicitly.
+export const fetchCategories = async (params?: {
+  searchName?: string;
+  limit?: number;
+  vendorId?: number;
+}) => {
+  return fetchCategoriesPaged({
+    page: 1,
+    limit: params?.limit ?? 10,
+    searchName: params?.searchName,
+    vendorId: params?.vendorId,
+  });
+};

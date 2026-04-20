@@ -12,6 +12,7 @@ export const initialVendor: VendorType = {
     open: '',
     close: '',
   },
-  type: '',
+  vendorCategoryId: 0,
+  vendorCategoryName: '',
   description: '',
 };

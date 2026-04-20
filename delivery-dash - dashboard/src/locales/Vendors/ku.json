@@ -5,8 +5,13 @@
   "filterVendors": "پاڵاوتنی فرۆشیاران",
   "searchPlaceholder": "گەڕان بەدوای فرۆشیاراندا...",
   "filterByType": "پاڵاوتن بەپێی جۆر",
+  "filterByCategory": "پاڵاوتن بەپێی جۆرەکە",
   "allTypes": "هەموو جۆرەکان",
   "all": "هەموو",
+  "categorySelect": {
+    "placeholder": "جۆرێک هەڵبژێرە",
+    "all": "هەموو جۆرەکان"
+  },
   "tableHeaders": {
     "business": "بازرگانی",
     "owner": "خاوەن",
@@ -68,6 +73,7 @@
       "descriptionRequired": "تکایە وەسفی فرۆشیار بنووسە",
       "openingTimeRequired": "تکایە کاتی کردنەوە هەڵبژێرە",
       "closingTimeRequired": "تکایە کاتی داخستن هەڵبژێرە",
+      "categoryRequired": "تکایە جۆری فرۆشیار هەڵبژێرە",
       "userRequired": "تکایە بەکارهێنەرێک هەڵبژێرە بۆ بەڕێوەبردنی ئەم فرۆشیارە",
       "timeLogicError": "کاتی داخستن دەبێت دوای کاتی کردنەوە بێت"
     },

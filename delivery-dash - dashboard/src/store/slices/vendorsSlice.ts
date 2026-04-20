@@ -31,7 +31,7 @@ export const fetchVendors = createAsyncThunk(
       page?: number;
       limit?: number;
       searchName?: string;
-      type?: number;
+      vendorCategoryId?: number;
     } = {},
     { rejectWithValue }
   ) => {

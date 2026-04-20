@@ -1,23 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Plus, Store, Tags, X, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Search, Plus, Store, X, Sparkles, SlidersHorizontal } from 'lucide-react';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { vendorTypes } from '@/constants/vendorTypes';
 
-const vendorTypesWithAll = [
-  { label: 'allTypes', value: -1 },
-  ...vendorTypes.map(vt => ({ ...vt, label: vt.label.toLowerCase() })),
-];
+import VendorCategorySelect from '@/components/Vendors/VendorCategorySelect';
 
 export default function VendorsFilters() {
   const navigate = useNavigate();
@@ -26,9 +16,8 @@ export default function VendorsFilters() {
 
   const [typedSearch, setTypedSearch] = useState('');
   const [search, setSearch] = useState('');
-  const [type, setType] = useState('-1');
+  const [vendorCategoryId, setVendorCategoryId] = useState('all');
 
-  // Debounce for search input
   const debounceRef = useRef<any>(null);
 
   useEffect(() => {
@@ -41,32 +30,25 @@ export default function VendorsFilters() {
     };
   }, [typedSearch]);
 
-  // Update search params in URL whenever any filter changes (debounced search)
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
-    if (search) {
-      params.set('search', search);
-    } else {
-      params.delete('search');
-    }
-    if (type !== '-1') {
-      params.set('type', type);
-    } else {
-      params.delete('type');
-    }
+    if (search) params.set('search', search);
+    else params.delete('search');
+    if (vendorCategoryId !== 'all')
+      params.set('vendorCategoryId', vendorCategoryId);
+    else params.delete('vendorCategoryId');
     params.set('page', '1');
     navigate(`${window.location.pathname}?${params.toString()}`, {
       replace: true,
     });
     // eslint-disable-next-line
-  }, [search, type]);
+  }, [search, vendorCategoryId]);
 
-  // Sync state if URL changes externally (browser nav)
   useEffect(() => {
     const urlSearch = searchParams.get('search') || '';
     setSearch(urlSearch);
     setTypedSearch(urlSearch);
-    setType(searchParams.get('type') || '-1');
+    setVendorCategoryId(searchParams.get('vendorCategoryId') || 'all');
     // eslint-disable-next-line
   }, [searchParams]);
 
@@ -82,10 +64,10 @@ export default function VendorsFilters() {
   const clearAllFilters = () => {
     setTypedSearch('');
     setSearch('');
-    setType('-1');
+    setVendorCategoryId('all');
   };
 
-  const hasActiveFilters = search || type !== '-1';
+  const hasActiveFilters = search || vendorCategoryId !== 'all';
 
   return (
     <div className='flex flex-col gap-5'>
@@ -123,7 +105,7 @@ export default function VendorsFilters() {
       {/* Filters Bar */}
       <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 relative z-30'>
         <div className='flex items-center gap-2 text-muted-foreground'>
-          <div className='p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors'>
+          <div className='p-1.5 rounded-lg bg-primary/10'>
             <SlidersHorizontal className='size-4 text-primary' />
           </div>
           <span className='text-sm font-medium'>{t('filterVendors')}</span>
@@ -151,22 +133,14 @@ export default function VendorsFilters() {
             )}
           </div>
 
-          {/* Type Filter */}
-          <div className='relative w-full sm:flex-1'>
-            <Tags className='absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10 pointer-events-none' />
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className='w-full h-10 bg-background/80 border-border/50 rounded-xl pl-10 transition-all duration-200'>
-                <SelectValue placeholder={t('filterByType')} />
-              </SelectTrigger>
-              <SelectContent>
-                {vendorTypesWithAll.map((vendorType) => (
-                  <SelectItem key={vendorType.value} value={String(vendorType.value)}>
-                    {t(`types.${vendorType.label}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Category Filter */}
+          <VendorCategorySelect
+            value={vendorCategoryId}
+            onValueChange={setVendorCategoryId}
+            allowAll
+            placeholder={t('filterByCategory')}
+            className='w-full sm:flex-1'
+          />
         </div>
 
         {/* Active Filters Badge & Clear Button */}

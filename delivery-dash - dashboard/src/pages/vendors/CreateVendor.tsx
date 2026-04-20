@@ -19,7 +19,6 @@ import VendorPhotoUpload from '@/components/Vendors/VendorPhotoUpload';
 import VendorBasicInfo from '@/components/Vendors/VendorBasicInfo';
 import VendorUserAssignment from '@/components/Vendors/VendorUserAssignment';
 
-import { vendorTypes } from '@/constants/vendorTypes';
 import { createVendor } from '@/data/Vendor';
 import { convertToUTCFormat } from '@/lib/timeUtils';
 import { compressImage } from '@/lib/imageCompression';
@@ -35,7 +34,8 @@ const CreateVendor = () => {
     description: '',
     openingTime: '09:00',
     closeTime: '17:00',
-    type: '1',
+    vendorCategoryId: '',
+    vendorCategoryName: '',
     userId: '',
     userName: '',
     photo: null as File | null,
@@ -109,6 +109,12 @@ const CreateVendor = () => {
       });
       return false;
     }
+    if (!formData.vendorCategoryId) {
+      toast.error(t('createVendor.validation.error'), {
+        description: t('createVendor.validation.categoryRequired'),
+      });
+      return false;
+    }
     if (!formData.userId.trim()) {
       toast.error(t('createVendor.validation.error'), {
         description: t('createVendor.validation.userRequired'),
@@ -145,7 +151,7 @@ const CreateVendor = () => {
         description: formData.description,
         openingTime: convertToUTCFormat(formData.openingTime),
         closeTime: convertToUTCFormat(formData.closeTime),
-        type: parseInt(formData.type),
+        vendorCategoryId: parseInt(formData.vendorCategoryId),
         userId: formData.userId,
         ...(formData.photo ? { ProfileImageUrl: formData.photo } : {}),
       };
@@ -228,9 +234,15 @@ const CreateVendor = () => {
                   <VendorBasicInfo
                     name={formData.name}
                     description={formData.description}
-                    type={formData.type}
+                    vendorCategoryId={formData.vendorCategoryId}
                     vendorId=""
                     onInputChange={handleInputChange}
+                    onVendorCategoryChange={(_id, item) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        vendorCategoryName: item?.name || '',
+                      }))
+                    }
                     disabled={isSubmitting}
                   />
                 </div>
@@ -346,10 +358,8 @@ const CreateVendor = () => {
                     {t('createVendor.preview.type')}
                   </p>
                   <p className='text-sm'>
-                    {(() => {
-                      const typeObj = vendorTypes.find((vt) => vt.value === parseInt(formData.type));
-                      return typeObj ? t(`types.${typeObj.label.toLowerCase()}`) : t('createVendor.preview.notSelected');
-                    })()}
+                    {formData.vendorCategoryName ||
+                      t('createVendor.preview.notSelected')}
                   </p>
                 </div>
                 <div className='space-y-2'>

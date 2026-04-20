@@ -23,25 +23,25 @@ const Vendors = () => {
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const page = parseInt(searchParams.get('page') || '1', 10);
   const search = searchParams.get('search') || '';
-  const typeParam = searchParams.get('type');
-  const type = typeParam !== null ? Number(typeParam) : null;
+  const vendorCategoryIdParam = searchParams.get('vendorCategoryId');
+  const vendorCategoryId =
+    vendorCategoryIdParam && vendorCategoryIdParam !== 'all'
+      ? Number(vendorCategoryIdParam)
+      : null;
 
   useEffect(() => {
-    const params: Record<string, any> = {
-      limit,
-      page,
-    };
+    const params: Record<string, any> = { limit, page };
 
     if (search) {
       params.searchName = search;
     }
 
-    if (type !== null && type !== -1) {
-      params.type = type;
+    if (vendorCategoryId !== null && !Number.isNaN(vendorCategoryId)) {
+      params.vendorCategoryId = vendorCategoryId;
     }
 
     dispatch(fetchVendors(params));
-  }, [dispatch, limit, page, search, type]);
+  }, [dispatch, limit, page, search, vendorCategoryId]);
 
   const hasNoVendors = !loading && vendors.length === 0 && !error;
 

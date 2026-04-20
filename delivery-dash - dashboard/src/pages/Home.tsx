@@ -112,7 +112,7 @@ const Home = () => {
     const typeCount: Record<string, number> = {};
 
     vendorsData.forEach((vendor) => {
-      const type = vendor.type || 'Other';
+      const type = vendor.vendorCategoryName || 'Other';
       typeCount[type] = (typeCount[type] || 0) + 1;
     });
 
@@ -131,7 +131,7 @@ const Home = () => {
     return vendorsData.slice(0, 5).map((v) => ({
       id: v.id,
       name: v.name,
-      type: v.type || 'Other',
+      type: v.vendorCategoryName || 'Other',
       orderCount: 0,
       logo: v.profileImageUrl || undefined,
     }));

@@ -5,8 +5,13 @@
   "filterVendors": "تصفية البائعين",
   "searchPlaceholder": "البحث عن البائعين...",
   "filterByType": "التصفية حسب النوع",
+  "filterByCategory": "التصفية حسب الفئة",
   "allTypes": "جميع الأنواع",
   "all": "الكل",
+  "categorySelect": {
+    "placeholder": "اختر فئة",
+    "all": "جميع الفئات"
+  },
   "tableHeaders": {
     "business": "الأعمال",
     "owner": "المالك",
@@ -68,6 +73,7 @@
       "descriptionRequired": "الرجاء إدخال وصف البائع",
       "openingTimeRequired": "الرجاء تحديد وقت الافتتاح",
       "closingTimeRequired": "الرجاء تحديد وقت الإغلاق",
+      "categoryRequired": "الرجاء اختيار فئة البائع",
       "userRequired": "الرجاء تحديد مستخدم لإدارة هذا البائع",
       "timeLogicError": "يجب أن يكون وقت الإغلاق بعد وقت الافتتاح"
     },

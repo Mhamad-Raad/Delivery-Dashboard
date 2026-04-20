@@ -5,8 +5,13 @@
   "filterVendors": "Filter Vendors",
   "searchPlaceholder": "Search vendors...",
   "filterByType": "Filter by type",
+  "filterByCategory": "Filter by category",
   "allTypes": "All Types",
   "all": "All",
+  "categorySelect": {
+    "placeholder": "Select a category",
+    "all": "All Categories"
+  },
   "tableHeaders": {
     "business": "Business",
     "owner": "Owner",
@@ -68,6 +73,7 @@
       "descriptionRequired": "Please enter vendor description",
       "openingTimeRequired": "Please select opening time",
       "closingTimeRequired": "Please select closing time",
+      "categoryRequired": "Please select a vendor category",
       "userRequired": "Please select a user to manage this vendor",
       "timeLogicError": "Closing time must be after opening time"
     },

@@ -8,7 +8,7 @@ export const createVendor = async (params: {
   description: string;
   openingTime: string;
   closeTime: string;
-  type: number;
+  vendorCategoryId: number;
   userId: string;
   ProfileImageUrl?: File;
 }) => {
@@ -16,13 +16,12 @@ export const createVendor = async (params: {
     const hasFile = params.ProfileImageUrl instanceof File;
 
     if (hasFile && params.ProfileImageUrl) {
-      // Use FormData for file upload
       const formData = new FormData();
       formData.append('name', params.name);
       formData.append('description', params.description);
       formData.append('openingTime', params.openingTime);
       formData.append('closeTime', params.closeTime);
-      formData.append('type', params.type.toString());
+      formData.append('vendorCategoryId', params.vendorCategoryId.toString());
       formData.append('userId', params.userId);
       formData.append('ProfileImageUrl', params.ProfileImageUrl);
 
@@ -43,7 +42,7 @@ export const createVendor = async (params: {
           description: params.description,
           openingTime: params.openingTime,
           closeTime: params.closeTime,
-          type: params.type,
+          vendorCategoryId: params.vendorCategoryId,
           userId: params.userId,
         },
         {
@@ -58,9 +57,9 @@ export const createVendor = async (params: {
     }
   } catch (error: any) {
     const errorData = error.response?.data;
-    return { 
+    return {
       error: errorData?.error || errorData?.message || error.message,
-      errors: errorData?.errors || []
+      errors: errorData?.errors || [],
     };
   }
 };
@@ -69,7 +68,7 @@ export const fetchVendors = async (params?: {
   page?: number;
   limit?: number;
   searchName?: string;
-  type?: number;
+  vendorCategoryId?: number;
 }) => {
   try {
     const response = await axiosInstance.get('/Vendor', {
@@ -79,9 +78,9 @@ export const fetchVendors = async (params?: {
     return response.data;
   } catch (error: any) {
     const errorData = error.response?.data;
-    return { 
+    return {
       error: errorData?.error || errorData?.message || error.message,
-      errors: errorData?.errors || []
+      errors: errorData?.errors || [],
     };
   }
 };
@@ -91,14 +90,12 @@ export const fetchVendorById = async (id: string) => {
     const response = await axiosInstance.get(`/Vendor/${id}`, {
       headers: { key: API_KEY, value: API_VALUE },
     });
-    console.log('response.data', response.data);
-
     return response.data;
   } catch (error: any) {
     const errorData = error.response?.data;
-    return { 
+    return {
       error: errorData?.error || errorData?.message || error.message,
-      errors: errorData?.errors || []
+      errors: errorData?.errors || [],
     };
   }
 };
@@ -110,7 +107,7 @@ export const updateVendor = async (
     description: string;
     openingTime: string;
     closeTime: string;
-    type: number;
+    vendorCategoryId: number;
     userId: string;
     ProfileImageUrl?: File;
   }
@@ -120,16 +117,9 @@ export const updateVendor = async (
     Object.entries(vendorData).forEach(([key, value]) => {
       if (value !== undefined) {
         formData.append(key, value as any);
-        console.log(
-          `FormData appended: ${key} =`,
-          value instanceof File ? `File: ${value.name}` : value
-        );
       }
     });
 
-    console.log('Sending update request to:', `/Vendor/${id}`);
-
-    // Create a custom config to override the default Content-Type
     const response = await axiosInstance.put(`/Vendor/${id}`, formData, {
       headers: {
         key: API_KEY,
@@ -138,14 +128,12 @@ export const updateVendor = async (
       transformRequest: [(data) => data],
     });
 
-    console.log('Update successful:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Update failed:', error.response?.data || error.message);
     const errorData = error.response?.data;
-    return { 
+    return {
       error: errorData?.error || errorData?.message || error.message,
-      errors: errorData?.errors || []
+      errors: errorData?.errors || [],
     };
   }
 };
@@ -161,10 +149,9 @@ export const deleteVendor = async (id: string) => {
     return response.data;
   } catch (error: any) {
     const errorData = error.response?.data;
-    return { 
+    return {
       error: errorData?.error || errorData?.message || error.message,
-      errors: errorData?.errors || []
+      errors: errorData?.errors || [],
     };
   }
 };
-

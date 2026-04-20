@@ -14,7 +14,6 @@ import {
   clearVendor,
   deleteVendor,
 } from '@/store/slices/vendorSlice';
-import { vendorTypes } from '@/constants/vendorTypes';
 import { convertToUTCFormat } from '@/lib/timeUtils';
 import ConfirmModal from '@/components/ui/Modals/ConfirmModal';
 import VendorDetailSkeleton from '@/components/Vendors/VendorDetailSkeleton';
@@ -47,7 +46,8 @@ const VendorDetail = () => {
     description: '',
     openingTime: '',
     closeTime: '',
-    type: '1',
+    vendorCategoryId: '',
+    vendorCategoryName: '',
     userId: '',
     userName: '',
     photo: null as File | null,
@@ -73,8 +73,7 @@ const VendorDetail = () => {
       vendor.description !== (formData.description || '') ||
       vendor.workingHours.open !== formData.openingTime ||
       vendor.workingHours.close !== formData.closeTime ||
-      String(vendorTypes.find((t) => t.label === vendor.type)?.value || '1') !==
-        formData.type ||
+      String(vendor.vendorCategoryId) !== formData.vendorCategoryId ||
       (vendor.userId || '') !== formData.userId
     );
   }, [vendor, formData, preview]);
@@ -102,9 +101,8 @@ const VendorDetail = () => {
         description: vendor.description || '',
         openingTime: vendor.workingHours.open,
         closeTime: vendor.workingHours.close,
-        type: String(
-          vendorTypes.find((t) => t.label === vendor.type)?.value || '1'
-        ),
+        vendorCategoryId: String(vendor.vendorCategoryId),
+        vendorCategoryName: vendor.vendorCategoryName || '',
         userId: vendor.userId || '',
         userName: vendor.ownerName || '',
         photo: null,
@@ -258,7 +256,7 @@ const VendorDetail = () => {
       description: string;
       openingTime: string;
       closeTime: string;
-      type: number;
+      vendorCategoryId: number;
       userId: string;
       ProfileImageUrl?: File;
     } = {
@@ -266,7 +264,7 @@ const VendorDetail = () => {
       description: formData.description,
       openingTime: convertToUTCFormat(formData.openingTime),
       closeTime: convertToUTCFormat(formData.closeTime),
-      type: parseInt(formData.type),
+      vendorCategoryId: parseInt(formData.vendorCategoryId),
       userId: formData.userId,
     };
 
@@ -351,9 +349,15 @@ const VendorDetail = () => {
               <VendorBasicInfo
                 name={formData.name}
                 description={formData.description}
-                type={formData.type}
+                vendorCategoryId={formData.vendorCategoryId}
                 vendorId={vendor._id}
                 onInputChange={handleInputChange}
+                onVendorCategoryChange={(_id, item) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    vendorCategoryName: item?.name || prev.vendorCategoryName,
+                  }))
+                }
                 disabled={updating}
               />
             </div>
