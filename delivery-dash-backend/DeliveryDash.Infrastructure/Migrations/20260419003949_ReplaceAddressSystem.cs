@@ -444,8 +444,7 @@ namespace DeliveryDash.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Buildings_Name_Trgm",
                 table: "Buildings",
-                column: "Name",
-                unique: true)
+                column: "Name")
                 .Annotation("Npgsql:IndexMethod", "gin")
                 .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 

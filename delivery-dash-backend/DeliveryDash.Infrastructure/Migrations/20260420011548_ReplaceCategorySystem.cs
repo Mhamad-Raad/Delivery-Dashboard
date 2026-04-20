@@ -87,10 +87,15 @@ namespace DeliveryDash.Infrastructure.Migrations
                 column: "IsActive");
 
             migrationBuilder.CreateIndex(
-                name: "IX_VendorCategories_Name_Trgm",
+                name: "UX_VendorCategories_Name",
                 table: "VendorCategories",
                 column: "Name",
-                unique: true)
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VendorCategories_Name_Trgm",
+                table: "VendorCategories",
+                column: "Name")
                 .Annotation("Npgsql:IndexMethod", "gin")
                 .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 
@@ -159,8 +164,7 @@ namespace DeliveryDash.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_Name_Trgm",
                 table: "Categories",
-                column: "Name",
-                unique: true)
+                column: "Name")
                 .Annotation("Npgsql:IndexMethod", "gin")
                 .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 
