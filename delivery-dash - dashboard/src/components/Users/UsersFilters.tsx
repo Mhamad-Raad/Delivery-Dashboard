@@ -21,7 +21,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 
-const roles = ['SuperAdmin', 'Admin', 'Vendor', 'Tenant'];
+const roles = ['SuperAdmin', 'Admin', 'Vendor', 'Customer'];
 
 const UsersFilters = () => {
   const { t } = useTranslation('users');
@@ -37,8 +37,8 @@ const UsersFilters = () => {
         return t('roles.admin');
       case 'Vendor':
         return t('roles.vendor');
-      case 'Tenant':
-        return t('roles.tenant');
+      case 'Customer':
+        return t('roles.customer');
       default:
         return roleName;
     }

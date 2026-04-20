@@ -31,7 +31,7 @@ const getUserTypeColor = (type: string) => {
     return 'bg-purple-500/10 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400 border-purple-500/30 dark:border-purple-500/40';
   if (typeLower === 'vendor')
     return 'bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border-blue-500/30 dark:border-blue-500/40';
-  if (typeLower === 'tenant')
+  if (typeLower === 'customer')
     return 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-500/30 dark:border-emerald-500/40';
   return 'bg-gray-500/10 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400 border-gray-500/30 dark:border-gray-500/40';
 };
@@ -90,7 +90,7 @@ const UsersTable = () => {
                   const translatedRole = userRole === 'SuperAdmin' ? t('roles.superAdmin')
                     : userRole === 'Admin' ? t('roles.admin')
                     : userRole === 'Vendor' ? t('roles.vendor')
-                    : userRole === 'Tenant' ? t('roles.tenant')
+                    : userRole === 'Customer' ? t('roles.customer')
                     : userRole;
                   // Generate initials for fallback
                   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();

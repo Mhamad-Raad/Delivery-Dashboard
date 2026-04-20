@@ -17,7 +17,7 @@
     "superAdmin": "مدير عام",
     "admin": "مدير",
     "vendor": "بائع",
-    "tenant": "مستأجر",
+    "customer": "عميل",
     "driver": "سائق"
   },
   "emptyState": {
@@ -45,7 +45,7 @@
       },
       "customer": {
         "title": "حساب عميل",
-        "description": "مستأجر مع صلاحيات قياسية"
+        "description": "عميل مع صلاحيات قياسية"
       }
     },
     "userInformation": "معلومات المستخدم",

@@ -192,7 +192,7 @@
     "userTypeStaffTitle": "Staff Account",
     "userTypeStaffDescription": "Admin or Vendor with system access",
     "userTypeCustomerTitle": "Customer Account",
-    "userTypeCustomerDescription": "Tenant with standard access",
+    "userTypeCustomerDescription": "Customer with standard access",
     "userTypeSelectedBadge": "Selected",
     "passwordRequirements": "Password must be at least 8 characters long",
     "addressTitle": "Address Information",

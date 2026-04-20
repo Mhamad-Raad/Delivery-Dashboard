@@ -17,7 +17,7 @@
     "superAdmin": "SuperAdmin",
     "admin": "Admin",
     "vendor": "Vendor",
-    "tenant": "Tenant",
+    "customer": "Customer",
     "driver": "Driver"
   },
   "emptyState": {
@@ -45,7 +45,7 @@
       },
       "customer": {
         "title": "Customer Account",
-        "description": "Tenant with standard access"
+        "description": "Customer with standard access"
       }
     },
     "userInformation": "User Information",

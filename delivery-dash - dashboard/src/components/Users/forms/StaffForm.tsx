@@ -53,7 +53,7 @@ export default function StaffForm({ formData, onInputChange, errors = {} }: Staf
       SuperAdmin: t("roles.superAdmin"),
       Admin: t("roles.admin"),
       Vendor: t("roles.vendor"),
-      Tenant: t("roles.tenant"),
+      Customer: t("roles.customer"),
     };
     return roleMap[role] || role;
   };

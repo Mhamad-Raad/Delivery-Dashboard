@@ -57,7 +57,7 @@ export default function CustomerForm({
       SuperAdmin: t('roles.superAdmin'),
       Admin: t('roles.admin'),
       Vendor: t('roles.vendor'),
-      Tenant: t('roles.tenant'),
+      Customer: t('roles.customer'),
       Driver: t('roles.driver'), // Assuming driver is added to translation or fallback
     };
     return roleMap[role] || role;

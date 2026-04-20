@@ -195,7 +195,7 @@
     "userTypeStaffTitle": "حساب طاقم",
     "userTypeStaffDescription": "مسؤول أو بائع لديه صلاحيات النظام",
     "userTypeCustomerTitle": "حساب عميل",
-    "userTypeCustomerDescription": "مستأجر بصلاحيات قياسية",
+    "userTypeCustomerDescription": "عميل بصلاحيات قياسية",
     "userTypeSelectedBadge": "محدد",
     "passwordRequirements": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
     "addressTitle": "معلومات العنوان",

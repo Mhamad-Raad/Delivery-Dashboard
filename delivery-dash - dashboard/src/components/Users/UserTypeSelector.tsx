@@ -11,7 +11,7 @@ const userTypeSections = [
   },
   {
     title: 'Customer Account',
-    description: 'Tenant with standard access',
+    description: 'Customer with standard access',
     value: 'Customer',
     icon: '👤',
   },
