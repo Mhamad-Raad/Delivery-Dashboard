@@ -15,9 +15,9 @@ namespace DeliveryDash.Application.Validators.CategoryValidators
                 .MaximumLength(500).WithMessage("Description cannot exceed 500 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.Description));
 
-            RuleFor(x => x.ParentCategoryId)
-                .GreaterThan(0).WithMessage("Parent category ID must be greater than 0")
-                .When(x => x.ParentCategoryId.HasValue);
+            RuleFor(x => x.SortOrder)
+                .GreaterThanOrEqualTo(0).WithMessage("Sort order must be zero or greater")
+                .When(x => x.SortOrder.HasValue);
         }
     }
 }

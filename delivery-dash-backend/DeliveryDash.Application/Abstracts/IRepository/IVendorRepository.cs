@@ -1,5 +1,4 @@
 using DeliveryDash.Domain.Entities;
-using DeliveryDash.Domain.Enums;
 
 namespace DeliveryDash.Application.Abstracts.IRepository
 {
@@ -8,14 +7,15 @@ namespace DeliveryDash.Application.Abstracts.IRepository
         Task<Vendor?> GetByIdAsync(int id);
         Task<Vendor?> GetByUserIdAsync(Guid userId);
         Task<(IEnumerable<Vendor> Vendors, int Total)> GetVendorsPagedAsync(
-            int page, 
-            int limit, 
-            string? searchName = null, 
-            VendorType? type = null);
+            int page,
+            int limit,
+            string? searchName = null,
+            int? vendorCategoryId = null);
         Task<Vendor> CreateAsync(Vendor vendor);
         Task<Vendor> UpdateAsync(Vendor vendor);
         Task DeleteAsync(int id);
         Task<bool> ExistsByNameAsync(string name);
         Task<bool> UserHasVendorAsync(Guid userId);
+        Task<int> CountByVendorCategoryIdAsync(int vendorCategoryId);
     }
 }

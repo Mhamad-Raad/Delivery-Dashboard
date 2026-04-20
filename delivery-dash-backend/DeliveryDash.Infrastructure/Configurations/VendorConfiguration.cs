@@ -9,7 +9,7 @@ namespace DeliveryDash.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<Vendor> builder)
         {
             builder.HasKey(v => v.Id);
-            
+
             builder.Property(v => v.Name)
                 .HasMaxLength(100)
                 .IsRequired();
@@ -23,9 +23,13 @@ namespace DeliveryDash.Infrastructure.Configurations
             builder.Property(v => v.CloseTime)
                 .IsRequired();
 
-            builder.Property(v => v.Type)
-                .HasConversion<int>()
+            builder.Property(v => v.VendorCategoryId)
                 .IsRequired();
+
+            builder.HasOne(v => v.VendorCategory)
+                .WithMany(vc => vc.Vendors)
+                .HasForeignKey(v => v.VendorCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(v => v.User)
                 .WithMany()
@@ -40,8 +44,8 @@ namespace DeliveryDash.Infrastructure.Configurations
                 .IsUnique()
                 .HasDatabaseName("IX_Vendors_UserId");
 
-            builder.HasIndex(v => v.Type)
-                .HasDatabaseName("IX_Vendors_Type");
+            builder.HasIndex(v => v.VendorCategoryId)
+                .HasDatabaseName("IX_Vendors_VendorCategoryId");
 
             builder.HasIndex(v => v.Name)
                 .HasDatabaseName("IX_Vendors_Name_Trgm")

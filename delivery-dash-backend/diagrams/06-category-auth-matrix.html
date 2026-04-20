@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Category System — Authorization Matrix</title>
+<style>
+  body { margin: 0; padding: 40px; background: #fafafa; font-family: -apple-system, Segoe UI, sans-serif; color: #222; }
+  h1 { margin: 0 0 8px; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 14px; }
+  .card { background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
+  h2 { font-size: 16px; margin: 0 0 14px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #e5e5e5; padding: 8px 10px; text-align: center; }
+  th { background: #f5f7fa; font-weight: 600; }
+  td.endpoint { text-align: left; font-family: Consolas, Menlo, monospace; font-size: 12px; background: #fafafa; }
+  td.method { text-align: center; font-weight: 600; font-size: 11px; }
+  td.method.get { color: #2d7d46; }
+  td.method.post { color: #1964a5; }
+  td.method.put { color: #a56d19; }
+  td.method.del { color: #b3261e; }
+  .ok { color: #2d7d46; font-weight: 700; }
+  .no { color: #b3261e; }
+  .own { color: #a56d19; font-weight: 600; font-size: 11px; }
+  .notes { font-size: 13px; color: #444; line-height: 1.7; }
+  .notes li { margin-bottom: 6px; }
+  code { background: #eef; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Category System — Authorization Matrix</h1>
+<div class="sub">Who can do what. "own" means service-layer check: the resource's <code>VendorId</code> must match the caller's <code>VendorId</code>.</div>
+
+<div class="card">
+<h2>VendorCategory — global store-level taxonomy</h2>
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Path</th>
+  <th>SuperAdmin</th>
+  <th>Admin</th>
+  <th>Vendor</th>
+  <th>VendorStaff</th>
+  <th>Driver</th>
+  <th>Customer</th>
+  <th>Anonymous</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="method get">GET</td>
+  <td class="endpoint">/VendorCategory</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td>
+</tr>
+<tr>
+  <td class="method get">GET</td>
+  <td class="endpoint">/VendorCategory/{id}</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td>
+</tr>
+<tr>
+  <td class="method post">POST</td>
+  <td class="endpoint">/VendorCategory</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method put">PUT</td>
+  <td class="endpoint">/VendorCategory/{id}</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method del">DELETE</td>
+  <td class="endpoint">/VendorCategory/{id}</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h2>Category — per-vendor product categories</h2>
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Path</th>
+  <th>SuperAdmin</th>
+  <th>Admin</th>
+  <th>Vendor</th>
+  <th>VendorStaff</th>
+  <th>Driver</th>
+  <th>Customer</th>
+  <th>Anonymous</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="method get">GET</td>
+  <td class="endpoint">/Category/mine</td>
+  <td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method get">GET</td>
+  <td class="endpoint">/Category/{id}</td>
+  <td class="no">✗</td><td class="no">✗</td><td class="own">own</td><td class="own">own</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method get">GET</td>
+  <td class="endpoint">/Category/by-vendor/{vendorId}</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method get">GET</td>
+  <td class="endpoint">/Category/by-vendor/{vendorId}/public</td>
+  <td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td>
+</tr>
+<tr>
+  <td class="method post">POST</td>
+  <td class="endpoint">/Category</td>
+  <td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method put">PUT</td>
+  <td class="endpoint">/Category/{id}</td>
+  <td class="no">✗</td><td class="no">✗</td><td class="own">own</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+<tr>
+  <td class="method del">DELETE</td>
+  <td class="endpoint">/Category/{id}</td>
+  <td class="no">✗</td><td class="no">✗</td><td class="own">own</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h2>Key rules</h2>
+<ul class="notes">
+  <li><strong>Vendor owner</strong> is inferred from the JWT (<code>VendorId</code> on the user). Request bodies never carry a <code>VendorId</code> for writes — it is set server-side.</li>
+  <li><strong>VendorStaff</strong> can read vendor's categories (needed to pick category when adding products) but cannot create/update/delete.</li>
+  <li><strong>Admin</strong> read on a vendor's product categories is for the vendor-detail page (audit / support). Admin never edits vendor menus.</li>
+  <li><strong>Delete VendorCategory</strong> blocks if any vendor references it (HTTP 409). Admin must reassign first or set <code>IsActive = false</code>.</li>
+  <li><strong>Delete Category</strong> succeeds even with products — affected products have their <code>CategoryId</code> nulled (uncategorized, not deleted).</li>
+  <li><strong>Per-vendor cap:</strong> 50 categories max; 51st create returns 409.</li>
+</ul>
+</div>
+
+</body>
+</html>

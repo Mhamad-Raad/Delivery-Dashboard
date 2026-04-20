@@ -13,78 +13,52 @@ namespace DeliveryDash.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Catagory?> GetByIdAsync(int id)
+        public async Task<Category?> GetByIdAsync(int id)
         {
             return await _context.Categories
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories)
-                .Include(c => c.Products)
+                .Include(c => c.Vendor)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task<Catagory?> GetByNameAsync(string name)
+        public async Task<IEnumerable<Category>> GetByVendorIdAsync(int vendorId)
         {
             return await _context.Categories
-                .Include(c => c.ParentCategory)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => EF.Functions.ILike(c.Name, name));
-        }
-
-        public async Task<IEnumerable<Catagory>> GetAllCategoriesAsync()
-        {
-            return await _context.Categories
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories)
-                .AsNoTracking()
+                .Where(c => c.VendorId == vendorId)
+                .OrderBy(c => c.SortOrder ?? int.MaxValue)
+                .ThenBy(c => c.Name)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Catagory>> GetTopLevelCategoriesAsync()
-        {
-            return await _context.Categories
-                .Include(c => c.SubCategories)
-                .AsNoTracking()
-                .Where(c => c.ParentCategoryId == null)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Catagory>> GetSubCategoriesAsync(int parentCategoryId)
-        {
-            return await _context.Categories
-                .Include(c => c.SubCategories)
-                .AsNoTracking()
-                .Where(c => c.ParentCategoryId == parentCategoryId)
-                .ToListAsync();
-        }
-
-        public async Task<(IEnumerable<Catagory> Categories, int Total)> GetCategoriesPagedAsync(
+        public async Task<(IEnumerable<Category> Categories, int Total)> GetPagedAsync(
             int page,
             int limit,
-            string? searchName = null,
-            int? parentCategoryId = null)
+            int? vendorId = null,
+            string? searchName = null)
         {
             var query = _context.Categories
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories)
-                .Include(c => c.Products)
+                .Include(c => c.Vendor)
                 .AsNoTracking()
                 .AsQueryable();
+
+            if (vendorId.HasValue)
+            {
+                query = query.Where(c => c.VendorId == vendorId.Value);
+            }
 
             if (!string.IsNullOrWhiteSpace(searchName))
             {
                 searchName = searchName.Trim();
-                query = query.Where(c => EF.Functions.ILike(c.Name, searchName));
-            }
-
-            if (parentCategoryId.HasValue)
-            {
-                query = query.Where(c => c.ParentCategoryId == parentCategoryId.Value);
+                query = query.Where(c => EF.Functions.ILike(c.Name, $"%{searchName}%"));
             }
 
             var total = await query.CountAsync();
 
             var categories = await query
+                .OrderBy(c => c.VendorId)
+                .ThenBy(c => c.SortOrder ?? int.MaxValue)
+                .ThenBy(c => c.Name)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync();
@@ -92,14 +66,14 @@ namespace DeliveryDash.Infrastructure.Repositories
             return (categories, total);
         }
 
-        public async Task<Catagory> CreateAsync(Catagory category)
+        public async Task<Category> CreateAsync(Category category)
         {
             await _context.Categories.AddAsync(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
-        public async Task<Catagory> UpdateAsync(Catagory category)
+        public async Task<Category> UpdateAsync(Category category)
         {
             _context.Categories.Update(category);
             await _context.SaveChangesAsync();
@@ -111,27 +85,42 @@ namespace DeliveryDash.Infrastructure.Repositories
             var category = await _context.Categories.FindAsync(id);
             if (category != null)
             {
+                // Null out CategoryId on any products that reference this category
+                await _context.Products
+                    .Where(p => p.CategoryId == id)
+                    .ExecuteUpdateAsync(p => p.SetProperty(x => x.CategoryId, (int?)null));
+
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
             }
         }
 
-        public async Task<bool> ExistsByNameAsync(string name)
+        public async Task<bool> ExistsByNameForVendorAsync(int vendorId, string name)
         {
             return await _context.Categories
-                .AnyAsync(c => EF.Functions.ILike(c.Name, name));
+                .AnyAsync(c => c.VendorId == vendorId && EF.Functions.ILike(c.Name, name));
         }
 
-        public async Task<bool> HasSubCategoriesAsync(int categoryId)
+        public async Task<int> CountByVendorIdAsync(int vendorId)
         {
             return await _context.Categories
-                .AnyAsync(c => c.ParentCategoryId == categoryId);
+                .CountAsync(c => c.VendorId == vendorId);
         }
 
-        public async Task<bool> HasProductsAsync(int categoryId)
+        public async Task<int> CountProductsAsync(int categoryId)
         {
             return await _context.Products
-                .AnyAsync(p => p.CategoryId == categoryId);
+                .CountAsync(p => p.CategoryId == categoryId);
+        }
+
+        public async Task<Dictionary<int, int>> CountProductsByCategoryIdsAsync(IEnumerable<int> categoryIds)
+        {
+            var ids = categoryIds.ToList();
+            return await _context.Products
+                .Where(p => p.CategoryId.HasValue && ids.Contains(p.CategoryId.Value))
+                .GroupBy(p => p.CategoryId!.Value)
+                .Select(g => new { CategoryId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CategoryId, x => x.Count);
         }
     }
 }

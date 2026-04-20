@@ -4,6 +4,6 @@ namespace DeliveryDash.Application.Requests.CategoryRequests
     {
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public int? ParentCategoryId { get; set; }
+        public int? SortOrder { get; set; }
     }
 }

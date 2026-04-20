@@ -26,8 +26,8 @@ namespace DeliveryDash.Application.Validators.VendorValidators
                 .NotEmpty().WithMessage("Closing time is required")
                 .GreaterThan(x => x.OpeningTime).WithMessage("Closing time must be after opening time");
 
-            RuleFor(x => x.Type)
-                .IsInEnum().WithMessage("Invalid vendor type");
+            RuleFor(x => x.VendorCategoryId)
+                .GreaterThan(0).WithMessage("Vendor category is required");
 
             RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("User ID is required");

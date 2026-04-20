@@ -1,5 +1,3 @@
-﻿using DeliveryDash.Domain.Enums;
-
 namespace DeliveryDash.Domain.Entities
 {
     public class Vendor
@@ -10,8 +8,10 @@ namespace DeliveryDash.Domain.Entities
         public string? ProfileImageUrl { get; set; }
         public TimeSpan OpeningTime { get; set; }
         public TimeSpan CloseTime { get; set; }
-        public VendorType Type { get; set; }
+        public int VendorCategoryId { get; set; }
         public Guid UserId { get; set; }
+
+        public VendorCategory VendorCategory { get; set; } = null!;
         public User User { get; set; } = null!;
     }
 }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Category System — Migration Flow</title>
+<style>
+  body { margin: 0; padding: 40px; background: #fafafa; font-family: -apple-system, Segoe UI, sans-serif; color: #222; }
+  h1 { margin: 0 0 8px; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 14px; }
+  .card { background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
+  h2 { font-size: 16px; margin: 0 0 14px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+  .mermaid { display: flex; justify-content: center; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #e5e5e5; padding: 8px 10px; text-align: left; }
+  th { background: #f5f7fa; font-weight: 600; }
+  code { background: #eef; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+  .step-num { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; background: #1964a5; color: white; border-radius: 50%; font-weight: 600; font-size: 12px; margin-right: 8px; }
+  ol.steps { list-style: none; padding-left: 0; }
+  ol.steps li { padding: 8px 0; border-bottom: 1px dashed #eee; }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; margin-left: 6px; }
+  .tag.add { background: #e4f5e8; color: #2d7d46; }
+  .tag.drop { background: #fbe5e4; color: #b3261e; }
+  .tag.rename { background: #fff2d9; color: #a56d19; }
+  .tag.backfill { background: #e4edf7; color: #1964a5; }
+  .tag.wipe { background: #f2e4f5; color: #7a2a9e; }
+</style>
+</head>
+<body>
+<h1>Category System — Migration Flow</h1>
+<div class="sub">Schema evolution from current state to target state, with the <code>VendorType</code> → <code>VendorCategory</code> backfill and the <code>Catagory</code> → <code>Category</code> rename+wipe path.</div>
+
+<div class="card">
+<h2>Before → After (schema)</h2>
+<div class="mermaid">
+<pre class="mermaid">
+flowchart LR
+    subgraph BEFORE["Before"]
+        direction TB
+        V1["Vendor<br/>+ Type: VendorType enum"]
+        C1["Catagory (typo)<br/>+ ParentCategoryId (self-ref)<br/>+ Name, Description<br/>NO VendorId — global"]
+        P1["Product<br/>+ CategoryId (→ global Catagory)"]
+        V1 -.-> P1
+        C1 --> P1
+    end
+
+    subgraph AFTER["After"]
+        direction TB
+        VC2["VendorCategory<br/>(NEW — global)<br/>Id, Name*, Description?, IsActive"]
+        V2["Vendor<br/>+ VendorCategoryId<br/>NO Type column"]
+        C2["Category (renamed, flat)<br/>+ VendorId (required)<br/>+ SortOrder?<br/>NO ParentCategoryId"]
+        P2["Product<br/>+ CategoryId (→ own-vendor Category)"]
+        VC2 --> V2
+        V2 --> C2
+        V2 --> P2
+        C2 --> P2
+    end
+
+    BEFORE ==> AFTER
+
+    classDef new fill:#e4f5e8,stroke:#2d7d46,stroke-width:2px
+    classDef drop fill:#fbe5e4,stroke:#b3261e
+    classDef rename fill:#fff2d9,stroke:#a56d19
+    class VC2 new
+    class C2 rename
+    class C1 drop
+</pre>
+</div>
+</div>
+
+<div class="card">
+<h2>Migration steps — <code>20260420xxxxxx_ReplaceCategorySystem</code></h2>
+<ol class="steps">
+  <li><span class="step-num">1</span><strong>Create <code>VendorCategories</code> table</strong> + unique index on <code>Name</code>. <span class="tag add">ADD</span></li>
+  <li><span class="step-num">2</span><strong>Seed 6 rows</strong> with explicit ids matching <code>VendorType</code> enum values (Restaurant=1, Cafe=2, Market=3, Bakery=4, Pharmacy=5, Other=6). <span class="tag backfill">SEED</span></li>
+  <li><span class="step-num">3</span><strong>Add nullable <code>VendorCategoryId</code></strong> column to <code>Vendors</code>. <span class="tag add">ADD</span></li>
+  <li><span class="step-num">4</span><strong>Backfill:</strong> <code>UPDATE Vendors SET VendorCategoryId = CAST(Type AS INTEGER)</code>. <span class="tag backfill">BACKFILL</span></li>
+  <li><span class="step-num">5</span><strong>Make <code>Vendors.VendorCategoryId</code> NOT NULL</strong>; add FK → <code>VendorCategories.Id</code> (OnDelete Restrict). <span class="tag add">CONSTRAIN</span></li>
+  <li><span class="step-num">6</span><strong>Drop <code>Vendors.Type</code></strong> column. <span class="tag drop">DROP</span></li>
+  <li><span class="step-num">7</span><strong>Rename table <code>Catagory</code> → <code>Category</code></strong>. <span class="tag rename">RENAME</span></li>
+  <li><span class="step-num">8</span><strong>Drop <code>Category.ParentCategoryId</code></strong> column + self-ref FK. <span class="tag drop">DROP</span></li>
+  <li><span class="step-num">9</span><strong>Null out <code>Product.CategoryId</code></strong> for all products, then <strong>delete all existing <code>Category</code> rows</strong>. Dev DB only (approved). <span class="tag wipe">WIPE</span></li>
+  <li><span class="step-num">10</span><strong>Add nullable <code>VendorId</code></strong>; make NOT NULL; FK → <code>Vendors.Id</code> (OnDelete Cascade). <span class="tag add">ADD</span></li>
+  <li><span class="step-num">11</span><strong>Add unique index on <code>(VendorId, Name)</code></strong>. <span class="tag add">INDEX</span></li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Code cleanup alongside migration</h2>
+<table>
+<thead><tr><th>Action</th><th>File(s)</th></tr></thead>
+<tbody>
+<tr><td>Delete <code>VendorType</code> enum</td><td><code>DeliveryDash.Domain/Enums/VendorType.cs</code></td></tr>
+<tr><td>Remove <code>Type</code> property from <code>Vendor</code>, add <code>VendorCategoryId</code> + nav</td><td><code>DeliveryDash.Domain/Entities/Vendor.cs</code></td></tr>
+<tr><td>Rename class <code>Catagory</code> → <code>Category</code></td><td><code>DeliveryDash.Domain/Entities/Catagory.cs</code> → <code>Category.cs</code></td></tr>
+<tr><td>Delete <code>CategoryHasSubCategoriesException</code></td><td><code>DeliveryDash.Domain/Exceptions/CategoryExceptions/</code></td></tr>
+<tr><td>Add <code>VendorCategoryInUseException</code>, <code>CategoryLimitReachedException</code></td><td><code>DeliveryDash.Domain/Exceptions/</code></td></tr>
+<tr><td>Rename <code>Catagory</code>/<code>Catagories</code> identifiers throughout</td><td>service, repo, DbContext, DbSet, DTOs, validators</td></tr>
+<tr><td>Add <code>VendorCategoryService</code>, <code>VendorCategoryController</code></td><td><code>Application/Services/</code>, <code>API/Controllers/</code></td></tr>
+<tr><td>Rewrite <code>CategoryService</code> with vendor-scoping + owner-only writes</td><td><code>Application/Services/CategoryService.cs</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', themeVariables: { fontSize: '13px' }, flowchart: { useMaxWidth: false } });
+</script>
+</body>
+</html>

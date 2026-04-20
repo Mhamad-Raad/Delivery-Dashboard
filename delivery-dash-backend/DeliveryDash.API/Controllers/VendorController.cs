@@ -1,7 +1,6 @@
 ﻿using DeliveryDash.API.Extensions;
 using DeliveryDash.Application.Abstracts.IService;
 using DeliveryDash.Application.Requests.VendorRequests;
-using DeliveryDash.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -70,9 +69,9 @@ namespace DeliveryDash.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] string? searchName = null,
-            [FromQuery] VendorType? type = null)
+            [FromQuery] int? vendorCategoryId = null)
         {
-            var vendors = await _vendorService.GetAllVendorsAsync(page, limit, searchName, type);
+            var vendors = await _vendorService.GetAllVendorsAsync(page, limit, searchName, vendorCategoryId);
             return Ok(vendors);
         }
 
@@ -83,9 +82,9 @@ namespace DeliveryDash.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] string? searchName = null,
-            [FromQuery] VendorType? type = null)
+            [FromQuery] int? vendorCategoryId = null)
         {
-            var vendors = await _vendorService.GetAllVendorsAsync(page, limit, searchName, type);
+            var vendors = await _vendorService.GetAllVendorsAsync(page, limit, searchName, vendorCategoryId);
             return Ok(vendors);
         }
 

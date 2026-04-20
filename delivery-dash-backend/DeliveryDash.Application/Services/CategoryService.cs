@@ -12,6 +12,8 @@ namespace DeliveryDash.Application.Services
 {
     public class CategoryService : ICategoryService
     {
+        private const int MaxCategoriesPerVendor = 50;
+
         private readonly ICategoryRepository _categoryRepository;
         private readonly IValidator<CreateCategoryRequest> _createValidator;
         private readonly IValidator<UpdateCategoryRequest> _updateValidator;
@@ -26,170 +28,147 @@ namespace DeliveryDash.Application.Services
             _updateValidator = updateValidator;
         }
 
-        public async Task<CategoryDetailResponse> GetCategoryByIdAsync(int id)
+        public async Task<CategoryDetailResponse> GetByIdAsync(int id, int? requestingVendorId)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-
             if (category == null)
-                throw new CategoryNotFoundException("Category not found");
+                throw new CategoryNotFoundException($"Category with ID {id} was not found.");
 
-            return MapToDetailResponse(category);
+            if (requestingVendorId.HasValue && category.VendorId != requestingVendorId.Value)
+                throw new CategoryVendorMismatchException();
+
+            var productsCount = await _categoryRepository.CountProductsAsync(id);
+            return MapToDetailResponse(category, productsCount);
         }
 
-        public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync()
+        public async Task<IEnumerable<CategoryResponse>> GetByVendorIdAsync(int vendorId)
         {
-            var categories = await _categoryRepository.GetAllCategoriesAsync();
-            return categories.Select(MapToResponse);
+            var categories = (await _categoryRepository.GetByVendorIdAsync(vendorId)).ToList();
+            if (categories.Count == 0)
+                return Enumerable.Empty<CategoryResponse>();
+
+            var counts = await _categoryRepository.CountProductsByCategoryIdsAsync(categories.Select(c => c.Id));
+            return categories.Select(c => MapToResponse(c, counts.GetValueOrDefault(c.Id))).ToList();
         }
 
-        public async Task<IEnumerable<CategoryResponse>> GetTopLevelCategoriesAsync()
-        {
-            var categories = await _categoryRepository.GetTopLevelCategoriesAsync();
-            return categories.Select(MapToResponse);
-        }
+        public Task<IEnumerable<CategoryResponse>> GetMineAsync(int vendorId) => GetByVendorIdAsync(vendorId);
 
-        public async Task<IEnumerable<CategoryResponse>> GetSubCategoriesAsync(int parentCategoryId)
+        public async Task<PagedResponse<CategoryResponse>> GetPagedAsync(
+            int page,
+            int limit,
+            int? vendorId,
+            string? searchName)
         {
-            var categories = await _categoryRepository.GetSubCategoriesAsync(parentCategoryId);
-            return categories.Select(MapToResponse);
-        }
+            var (categories, total) = await _categoryRepository.GetPagedAsync(page, limit, vendorId, searchName);
+            var categoryList = categories.ToList();
 
-        public async Task<PagedResponse<CategoryResponse>> GetCategoriesPagedAsync(
-            int page = 1,
-            int limit = 10,
-            string? searchName = null,
-            int? parentCategoryId = null)
-        {
-            var (categories, total) = await _categoryRepository.GetCategoriesPagedAsync(
-                page, limit, searchName, parentCategoryId);
-
-            var categoryResponses = categories.Select(MapToResponse).ToList();
+            var counts = categoryList.Count > 0
+                ? await _categoryRepository.CountProductsByCategoryIdsAsync(categoryList.Select(c => c.Id))
+                : new Dictionary<int, int>();
 
             return new PagedResponse<CategoryResponse>
             {
-                Data = categoryResponses,
+                Data = categoryList.Select(c => MapToResponse(c, counts.GetValueOrDefault(c.Id))).ToList(),
                 Page = page,
                 Limit = limit,
                 Total = total
             };
         }
 
-        public async Task<CategoryDetailResponse> CreateCategoryAsync(CreateCategoryRequest request)
+        public async Task<CategoryDetailResponse> CreateAsync(int vendorId, CreateCategoryRequest request)
         {
             await _createValidator.ValidateAndThrowCustomAsync(request);
 
-            // Check if category name already exists
-            if (await _categoryRepository.ExistsByNameAsync(request.Name))
+            var currentCount = await _categoryRepository.CountByVendorIdAsync(vendorId);
+            if (currentCount >= MaxCategoriesPerVendor)
+                throw new CategoryLimitReachedException(MaxCategoriesPerVendor);
+
+            if (await _categoryRepository.ExistsByNameForVendorAsync(vendorId, request.Name))
                 throw new DuplicateCategoryNameException(request.Name);
 
-            // Check if parent category exists (if provided)
-            if (request.ParentCategoryId.HasValue)
+            var category = new Category
             {
-                var parentCategory = await _categoryRepository.GetByIdAsync(request.ParentCategoryId.Value);
-                if (parentCategory == null)
-                    throw new CategoryNotFoundException("Parent category not found");
-            }
-
-            var category = new Catagory
-            {
-                Name = request.Name,
+                VendorId = vendorId,
+                Name = request.Name.Trim(),
                 Description = request.Description,
-                ParentCategoryId = request.ParentCategoryId
+                SortOrder = request.SortOrder
             };
 
-            var createdCategory = await _categoryRepository.CreateAsync(category);
-
-            // Fetch the category with parent and subcategories
-            var categoryWithDetails = await _categoryRepository.GetByIdAsync(createdCategory.Id);
-            return MapToDetailResponse(categoryWithDetails!);
+            var created = await _categoryRepository.CreateAsync(category);
+            var reloaded = await _categoryRepository.GetByIdAsync(created.Id);
+            return MapToDetailResponse(reloaded!, 0);
         }
 
-        public async Task<CategoryDetailResponse> UpdateCategoryAsync(int id, UpdateCategoryRequest request)
+        public async Task<CategoryDetailResponse> UpdateAsync(int id, int vendorId, UpdateCategoryRequest request)
         {
             await _updateValidator.ValidateAndThrowCustomAsync(request);
 
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
-                throw new CategoryNotFoundException("Category not found");
+                throw new CategoryNotFoundException($"Category with ID {id} was not found.");
 
-            // Check if new name conflicts with existing category
+            if (category.VendorId != vendorId)
+                throw new CategoryVendorMismatchException();
+
             if (!string.IsNullOrWhiteSpace(request.Name) &&
-                request.Name != category.Name &&
-                await _categoryRepository.ExistsByNameAsync(request.Name))
+                !string.Equals(request.Name.Trim(), category.Name, StringComparison.OrdinalIgnoreCase) &&
+                await _categoryRepository.ExistsByNameForVendorAsync(vendorId, request.Name.Trim()))
             {
-                throw new DuplicateCategoryNameException(request.Name);
+                throw new DuplicateCategoryNameException(request.Name.Trim());
             }
 
-            // Check if parent category exists (if provided)
-            if (request.ParentCategoryId.HasValue)
-            {
-                // Prevent self-referencing
-                if (request.ParentCategoryId == id)
-                    throw new InvalidOperationException("A category cannot be its own parent");
-
-                var parentCategory = await _categoryRepository.GetByIdAsync(request.ParentCategoryId.Value);
-                if (parentCategory == null)
-                    throw new CategoryNotFoundException("Parent category not found");
-            }
-
-            // Update only provided fields
             if (!string.IsNullOrWhiteSpace(request.Name))
-                category.Name = request.Name;
+                category.Name = request.Name.Trim();
 
             if (request.Description != null)
                 category.Description = request.Description;
 
-            if (request.ParentCategoryId.HasValue)
-                category.ParentCategoryId = request.ParentCategoryId;
+            if (request.SortOrder.HasValue)
+                category.SortOrder = request.SortOrder;
 
             await _categoryRepository.UpdateAsync(category);
 
-            var updatedCategory = await _categoryRepository.GetByIdAsync(id);
-            return MapToDetailResponse(updatedCategory!);
+            var updated = await _categoryRepository.GetByIdAsync(id);
+            var productsCount = await _categoryRepository.CountProductsAsync(id);
+            return MapToDetailResponse(updated!, productsCount);
         }
 
-        public async Task DeleteCategoryAsync(int id)
+        public async Task DeleteAsync(int id, int vendorId)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
-                throw new CategoryNotFoundException("Category not found");
+                throw new CategoryNotFoundException($"Category with ID {id} was not found.");
 
-            // Check if category has subcategories
-            if (await _categoryRepository.HasSubCategoriesAsync(id))
-                throw new CategoryHasSubCategoriesException(id);
-
-            // Check if category has products
-            if (await _categoryRepository.HasProductsAsync(id))
-                throw new CategoryHasProductsException(id);
+            if (category.VendorId != vendorId)
+                throw new CategoryVendorMismatchException();
 
             await _categoryRepository.DeleteAsync(id);
         }
 
-        private static CategoryResponse MapToResponse(Catagory category)
+        private static CategoryResponse MapToResponse(Category category, int productsCount)
         {
             return new CategoryResponse
             {
                 Id = category.Id,
+                VendorId = category.VendorId,
                 Name = category.Name,
                 Description = category.Description,
-                ParentCategoryId = category.ParentCategoryId,
-                ParentCategoryName = category.ParentCategory?.Name,
-                SubCategoriesCount = category.SubCategories?.Count ?? 0,
-                ProductsCount = category.Products?.Count ?? 0
+                SortOrder = category.SortOrder,
+                ProductsCount = productsCount
             };
         }
 
-        private static CategoryDetailResponse MapToDetailResponse(Catagory category)
+        private static CategoryDetailResponse MapToDetailResponse(Category category, int productsCount)
         {
             return new CategoryDetailResponse
             {
                 Id = category.Id,
+                VendorId = category.VendorId,
+                VendorName = category.Vendor?.Name ?? string.Empty,
                 Name = category.Name,
                 Description = category.Description,
-                ParentCategoryId = category.ParentCategoryId,
-                ParentCategoryName = category.ParentCategory?.Name,
-                SubCategories = category.SubCategories?.Select(MapToResponse).ToList() ?? new List<CategoryResponse>(),
-                ProductsCount = category.Products?.Count ?? 0
+                SortOrder = category.SortOrder,
+                ProductsCount = productsCount
             };
         }
     }

@@ -7,8 +7,8 @@ using DeliveryDash.Application.Responses.Common;
 using DeliveryDash.Application.Responses.VendorResponses;
 using DeliveryDash.Domain.Constants;
 using DeliveryDash.Domain.Entities;
-using DeliveryDash.Domain.Enums;
 using DeliveryDash.Domain.Exceptions.UserExceptions;
+using DeliveryDash.Domain.Exceptions.VendorCategoryExceptions;
 using DeliveryDash.Domain.Exceptions.VendorExceptions;
 using Microsoft.AspNetCore.Identity;
 
@@ -18,6 +18,7 @@ namespace DeliveryDash.Application.Services
     {
         private readonly IVendorRepository _vendorRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IVendorCategoryRepository _vendorCategoryRepository;
         private readonly UserManager<User> _userManager;
         private readonly IValidator<CreateVendorRequest> _createValidator;
         private readonly IValidator<UpdateVendorRequest> _updateValidator;
@@ -26,6 +27,7 @@ namespace DeliveryDash.Application.Services
         public VendorService(
             IVendorRepository vendorRepository,
             IUserRepository userRepository,
+            IVendorCategoryRepository vendorCategoryRepository,
             UserManager<User> userManager,
             IValidator<CreateVendorRequest> createValidator,
             IValidator<UpdateVendorRequest> updateValidator,
@@ -33,6 +35,7 @@ namespace DeliveryDash.Application.Services
         {
             _vendorRepository = vendorRepository;
             _userRepository = userRepository;
+            _vendorCategoryRepository = vendorCategoryRepository;
             _userManager = userManager;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
@@ -60,9 +63,9 @@ namespace DeliveryDash.Application.Services
             int page = 1,
             int limit = 10,
             string? searchName = null,
-            VendorType? type = null)
+            int? vendorCategoryId = null)
         {
-            var (vendors, total) = await _vendorRepository.GetVendorsPagedAsync(page, limit, searchName, type);
+            var (vendors, total) = await _vendorRepository.GetVendorsPagedAsync(page, limit, searchName, vendorCategoryId);
 
             var vendorResponses = vendors.Select(MapToResponse).ToList();
 
@@ -79,21 +82,21 @@ namespace DeliveryDash.Application.Services
         {
             await _createValidator.ValidateAndThrowCustomAsync(request);
 
-            // Check if vendor name already exists
             if (await _vendorRepository.ExistsByNameAsync(request.Name))
                 throw new DuplicateVendorNameException(request.Name);
 
-            // Check if user exists
+            var vendorCategory = await _vendorCategoryRepository.GetByIdAsync(request.VendorCategoryId);
+            if (vendorCategory == null)
+                throw new VendorCategoryNotFoundException(request.VendorCategoryId);
+
             var user = await _userRepository.GetByIdAsync(request.UserId);
             if (user == null)
                 throw new UserNotFoundException();
 
-            // Check if user has the Vendor role
             var isVendor = await _userManager.IsInRoleAsync(user, IdentityRoleConstant.Vendor);
             if (!isVendor)
                 throw new UserNotVendorRoleException(request.UserId);
 
-            // Check if user already has a vendor
             if (await _vendorRepository.UserHasVendorAsync(request.UserId))
                 throw new UserAlreadyHasVendorException(request.UserId);
 
@@ -103,14 +106,13 @@ namespace DeliveryDash.Application.Services
                 Description = request.Description,
                 OpeningTime = request.OpeningTime,
                 CloseTime = request.CloseTime,
-                Type = request.Type,
+                VendorCategoryId = request.VendorCategoryId,
                 UserId = request.UserId,
                 ProfileImageUrl = imageUrl
             };
 
             var createdVendor = await _vendorRepository.CreateAsync(vendor);
 
-            // Fetch the vendor with user details
             var vendorWithDetails = await _vendorRepository.GetByIdAsync(createdVendor.Id);
             return MapToDetailResponse(vendorWithDetails!);
         }
@@ -123,7 +125,6 @@ namespace DeliveryDash.Application.Services
             if (vendor == null)
                 throw new VendorNotFoundException("Vendor not found");
 
-            // Check if new name conflicts with existing vendor
             if (!string.IsNullOrWhiteSpace(request.Name) &&
                 request.Name != vendor.Name &&
                 await _vendorRepository.ExistsByNameAsync(request.Name))
@@ -131,7 +132,13 @@ namespace DeliveryDash.Application.Services
                 throw new DuplicateVendorNameException(request.Name);
             }
 
-            // Update only provided fields
+            if (request.VendorCategoryId.HasValue && request.VendorCategoryId.Value != vendor.VendorCategoryId)
+            {
+                var vendorCategory = await _vendorCategoryRepository.GetByIdAsync(request.VendorCategoryId.Value);
+                if (vendorCategory == null)
+                    throw new VendorCategoryNotFoundException(request.VendorCategoryId.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Name))
                 vendor.Name = request.Name;
 
@@ -144,10 +151,9 @@ namespace DeliveryDash.Application.Services
             if (request.CloseTime.HasValue)
                 vendor.CloseTime = request.CloseTime.Value;
 
-            if (request.Type.HasValue)
-                vendor.Type = request.Type.Value;
+            if (request.VendorCategoryId.HasValue)
+                vendor.VendorCategoryId = request.VendorCategoryId.Value;
 
-            // Update image URL if provided
             if (!string.IsNullOrEmpty(imageUrl))
                 vendor.ProfileImageUrl = imageUrl;
 
@@ -163,7 +169,6 @@ namespace DeliveryDash.Application.Services
             if (vendor == null)
                 throw new VendorNotFoundException("Vendor not found");
 
-            // Delete vendor image if exists
             if (!string.IsNullOrEmpty(vendor.ProfileImageUrl))
             {
                 await _fileStorageService.DeleteImageAsync(vendor.ProfileImageUrl);
@@ -181,7 +186,8 @@ namespace DeliveryDash.Application.Services
                 ProfileImageUrl = vendor.ProfileImageUrl,
                 OpeningTime = vendor.OpeningTime,
                 CloseTime = vendor.CloseTime,
-                Type = vendor.Type.ToString(),
+                VendorCategoryId = vendor.VendorCategoryId,
+                VendorCategoryName = vendor.VendorCategory?.Name ?? string.Empty,
                 FirstName = vendor.User?.FirstName ?? string.Empty,
                 LastName = vendor.User?.LastName ?? string.Empty,
                 Phone = vendor.User?.PhoneNumber ?? string.Empty,
@@ -200,7 +206,8 @@ namespace DeliveryDash.Application.Services
                 UserProfileImageUrl = vendor.User?.ProfileImageUrl,
                 OpeningTime = vendor.OpeningTime,
                 CloseTime = vendor.CloseTime,
-                Type = vendor.Type.ToString(),
+                VendorCategoryId = vendor.VendorCategoryId,
+                VendorCategoryName = vendor.VendorCategory?.Name ?? string.Empty,
                 UserId = vendor.UserId,
                 FirstName = vendor.User?.FirstName ?? string.Empty,
                 LastName = vendor.User?.LastName ?? string.Empty,

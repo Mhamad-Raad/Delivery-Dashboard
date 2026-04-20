@@ -1,6 +1,5 @@
 using DeliveryDash.Application.Abstracts.IRepository;
 using DeliveryDash.Domain.Entities;
-using DeliveryDash.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeliveryDash.Infrastructure.Repositories
@@ -18,6 +17,7 @@ namespace DeliveryDash.Infrastructure.Repositories
         {
             return await _context.Vendors
                 .Include(v => v.User)
+                .Include(v => v.VendorCategory)
                 .FirstOrDefaultAsync(v => v.Id == id);
         }
 
@@ -25,17 +25,19 @@ namespace DeliveryDash.Infrastructure.Repositories
         {
             return await _context.Vendors
                 .Include(v => v.User)
+                .Include(v => v.VendorCategory)
                 .FirstOrDefaultAsync(v => v.UserId == userId);
         }
 
         public async Task<(IEnumerable<Vendor> Vendors, int Total)> GetVendorsPagedAsync(
-            int page, 
-            int limit, 
-            string? searchName = null, 
-            VendorType? type = null)
+            int page,
+            int limit,
+            string? searchName = null,
+            int? vendorCategoryId = null)
         {
             var query = _context.Vendors
                 .Include(v => v.User)
+                .Include(v => v.VendorCategory)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -45,9 +47,9 @@ namespace DeliveryDash.Infrastructure.Repositories
                 query = query.Where(v => EF.Functions.ILike(v.Name, $"%{searchName}%"));
             }
 
-            if (type.HasValue)
+            if (vendorCategoryId.HasValue)
             {
-                query = query.Where(v => v.Type == type.Value);
+                query = query.Where(v => v.VendorCategoryId == vendorCategoryId.Value);
             }
 
             var total = await query.CountAsync();
@@ -94,6 +96,12 @@ namespace DeliveryDash.Infrastructure.Repositories
         {
             return await _context.Vendors
                 .AnyAsync(v => v.UserId == userId);
+        }
+
+        public async Task<int> CountByVendorCategoryIdAsync(int vendorCategoryId)
+        {
+            return await _context.Vendors
+                .CountAsync(v => v.VendorCategoryId == vendorCategoryId);
         }
     }
 }

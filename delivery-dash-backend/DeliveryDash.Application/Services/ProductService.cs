@@ -93,12 +93,14 @@ namespace DeliveryDash.Application.Services
             if (vendor == null)
                 throw new VendorNotFoundException("Vendor not found");
 
-            // Check if category exists (if provided)
+            // Check if category exists and belongs to this vendor
             if (request.CategoryId.HasValue)
             {
                 var category = await _categoryRepository.GetByIdAsync(request.CategoryId.Value);
                 if (category == null)
                     throw new CategoryNotFoundException("Category not found");
+                if (category.VendorId != vendorId)
+                    throw new CategoryVendorMismatchException();
             }
 
             var product = new Product
@@ -132,12 +134,14 @@ namespace DeliveryDash.Application.Services
             if (product == null)
                 throw new ProductNotFoundException("Product not found");
 
-            // Check if category exists (if provided)
+            // Check if category exists and belongs to this product's vendor
             if (request.CategoryId.HasValue)
             {
                 var category = await _categoryRepository.GetByIdAsync(request.CategoryId.Value);
                 if (category == null)
                     throw new CategoryNotFoundException("Category not found");
+                if (category.VendorId != product.VendorId)
+                    throw new CategoryVendorMismatchException();
             }
 
             // Update only provided fields

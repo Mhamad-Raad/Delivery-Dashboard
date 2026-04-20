@@ -6,17 +6,16 @@ namespace DeliveryDash.Application.Abstracts.IService
 {
     public interface ICategoryService
     {
-        Task<CategoryDetailResponse> GetCategoryByIdAsync(int id);
-        Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync();
-        Task<IEnumerable<CategoryResponse>> GetTopLevelCategoriesAsync();
-        Task<IEnumerable<CategoryResponse>> GetSubCategoriesAsync(int parentCategoryId);
-        Task<PagedResponse<CategoryResponse>> GetCategoriesPagedAsync(
-            int page = 1,
-            int limit = 10,
-            string? searchName = null,
-            int? parentCategoryId = null);
-        Task<CategoryDetailResponse> CreateCategoryAsync(CreateCategoryRequest request);
-        Task<CategoryDetailResponse> UpdateCategoryAsync(int id, UpdateCategoryRequest request);
-        Task DeleteCategoryAsync(int id);
+        Task<CategoryDetailResponse> GetByIdAsync(int id, int? requestingVendorId);
+        Task<IEnumerable<CategoryResponse>> GetByVendorIdAsync(int vendorId);
+        Task<IEnumerable<CategoryResponse>> GetMineAsync(int vendorId);
+        Task<PagedResponse<CategoryResponse>> GetPagedAsync(
+            int page,
+            int limit,
+            int? vendorId,
+            string? searchName);
+        Task<CategoryDetailResponse> CreateAsync(int vendorId, CreateCategoryRequest request);
+        Task<CategoryDetailResponse> UpdateAsync(int id, int vendorId, UpdateCategoryRequest request);
+        Task DeleteAsync(int id, int vendorId);
     }
 }

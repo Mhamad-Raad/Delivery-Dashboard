@@ -1,5 +1,6 @@
 using DeliveryDash.Application.Abstracts.IService;
 using DeliveryDash.Application.Requests.CategoryRequests;
+using DeliveryDash.Domain.Exceptions.VendorExceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,88 +8,126 @@ namespace DeliveryDash.API.Controllers
 {
     [Route("DeliveryDashApi/[controller]")]
     [ApiController]
-    [Authorize(Roles = "SuperAdmin, Admin")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CategoryController(ICategoryService categoryService)
+        public CategoryController(
+            ICategoryService categoryService,
+            ICurrentUserService currentUserService)
         {
             _categoryService = categoryService;
+            _currentUserService = currentUserService;
+        }
+
+        [HttpGet("mine")]
+        [Authorize(Roles = "Vendor, VendorStaff")]
+        [EndpointDescription("Returns the calling vendor's (or vendor staff's) own product categories.")]
+        public async Task<IActionResult> GetMine()
+        {
+            var vendorId = await ResolveVendorContextAsync();
+            var categories = await _categoryService.GetMineAsync(vendorId);
+            return Ok(categories);
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
-        [EndpointDescription("Retrieves a specific category by ID including its subcategories. Returns category details with hierarchical structure. Public endpoint - no authentication required.")]
-        public async Task<IActionResult> GetCategoryById(int id)
+        [Authorize(Roles = "Vendor, VendorStaff")]
+        [EndpointDescription("Returns a single product category. Vendors/VendorStaff can only read categories belonging to their own vendor.")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var vendorId = await ResolveVendorContextAsync();
+            var category = await _categoryService.GetByIdAsync(id, vendorId);
             return Ok(category);
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        [EndpointDescription("Retrieves all categories in a flat list. Returns the complete category hierarchy. Useful for building category trees or navigation menus. Public endpoint - no authentication required.")]
-        public async Task<IActionResult> GetAllCategories()
+        [HttpGet("by-vendor/{vendorId:int}")]
+        [Authorize(Roles = "SuperAdmin, Admin")]
+        [EndpointDescription("Admin read of a vendor's product categories (includes product counts). Used by the vendor-details page.")]
+        public async Task<IActionResult> GetByVendorForAdmin(int vendorId)
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
+            var categories = await _categoryService.GetByVendorIdAsync(vendorId);
             return Ok(categories);
         }
 
-        [HttpGet("top-level")]
+        [HttpGet("by-vendor/{vendorId:int}/public")]
         [AllowAnonymous]
-        [EndpointDescription("Retrieves only top-level categories (categories without a parent). Returns root categories for building hierarchical navigation. Public endpoint - no authentication required.")]
-        public async Task<IActionResult> GetTopLevelCategories()
+        [EndpointDescription("Public read of a vendor's product categories. Used by the customer app to render menu sections while browsing a shop.")]
+        public async Task<IActionResult> GetByVendorPublic(int vendorId)
         {
-            var categories = await _categoryService.GetTopLevelCategoriesAsync();
-            return Ok(categories);
-        }
-
-        [HttpGet("subcategories/{parentCategoryId}")]
-        [AllowAnonymous]
-        [EndpointDescription("Retrieves all direct subcategories of a specific parent category. Returns child categories for building dynamic category dropdowns or filters. Public endpoint - no authentication required.")]
-        public async Task<IActionResult> GetSubCategories(int parentCategoryId)
-        {
-            var categories = await _categoryService.GetSubCategoriesAsync(parentCategoryId);
+            var categories = await _categoryService.GetByVendorIdAsync(vendorId);
             return Ok(categories);
         }
 
         [HttpGet("paged")]
-        [AllowAnonymous]
-        [EndpointDescription("Retrieves a paginated list of categories with optional filtering by name and parent category. Supports pagination for admin interfaces or large category lists. Public endpoint - no authentication required.")]
-        public async Task<IActionResult> GetCategoriesPaged(
+        [Authorize(Roles = "SuperAdmin, Admin, Vendor, VendorStaff")]
+        [EndpointDescription("Paged list of categories. Admins may pass ?vendorId= to filter. Vendors/VendorStaff are auto-scoped to their own vendor.")]
+        public async Task<IActionResult> GetPaged(
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
-            [FromQuery] string? searchName = null,
-            [FromQuery] int? parentCategoryId = null)
+            [FromQuery] int? vendorId = null,
+            [FromQuery] string? searchName = null)
         {
-            var categories = await _categoryService.GetCategoriesPagedAsync(
-                page, limit, searchName, parentCategoryId);
-            return Ok(categories);
+            var callerVendorId = await _currentUserService.GetCurrentVendorIdAsync()
+                ?? await _currentUserService.GetCurrentStaffVendorIdAsync();
+
+            if (callerVendorId.HasValue)
+            {
+                vendorId = callerVendorId;
+            }
+
+            var result = await _categoryService.GetPagedAsync(page, limit, vendorId, searchName);
+            return Ok(result);
         }
 
         [HttpPost]
-        [EndpointDescription("Creates a new category with the provided details. Accepts category name and optional parent category ID for creating subcategories. Restricted to SuperAdmin and Admin roles.")]
-        public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
+        [Authorize(Roles = "Vendor")]
+        [EndpointDescription("Creates a new product category owned by the calling vendor. VendorStaff are not allowed.")]
+        public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
         {
-            var category = await _categoryService.CreateCategoryAsync(request);
-            return CreatedAtAction(nameof(GetCategoryById), new { id = category.Id }, category);
+            var vendorId = await ResolveVendorOwnerIdAsync();
+            var category = await _categoryService.CreateAsync(vendorId, request);
+            return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
         }
 
         [HttpPut("{id}")]
-        [EndpointDescription("Updates an existing category's details by ID. Allows changing the category name and parent category relationship. Restricted to SuperAdmin and Admin roles.")]
-        public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryRequest request)
+        [Authorize(Roles = "Vendor")]
+        [EndpointDescription("Updates a product category. Vendor can only update categories they own.")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryRequest request)
         {
-            var category = await _categoryService.UpdateCategoryAsync(id, request);
+            var vendorId = await ResolveVendorOwnerIdAsync();
+            var category = await _categoryService.UpdateAsync(id, vendorId, request);
             return Ok(category);
         }
 
         [HttpDelete("{id}")]
-        [EndpointDescription("Permanently deletes a category by ID. This action also removes all subcategories and may affect associated products. Cannot be undone. Restricted to SuperAdmin and Admin roles.")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        [Authorize(Roles = "Vendor")]
+        [EndpointDescription("Deletes a product category. Products under it have their CategoryId set to null (uncategorized).")]
+        public async Task<IActionResult> Delete(int id)
         {
-            await _categoryService.DeleteCategoryAsync(id);
+            var vendorId = await ResolveVendorOwnerIdAsync();
+            await _categoryService.DeleteAsync(id, vendorId);
             return NoContent();
+        }
+
+        private async Task<int> ResolveVendorContextAsync()
+        {
+            var vendorId = await _currentUserService.GetCurrentVendorIdAsync()
+                ?? await _currentUserService.GetCurrentStaffVendorIdAsync();
+
+            if (!vendorId.HasValue)
+                throw new VendorNotFoundException("No vendor context found for the current user.");
+
+            return vendorId.Value;
+        }
+
+        private async Task<int> ResolveVendorOwnerIdAsync()
+        {
+            var vendorId = await _currentUserService.GetCurrentVendorIdAsync();
+            if (!vendorId.HasValue)
+                throw new VendorNotFoundException("No vendor found for the current user.");
+
+            return vendorId.Value;
         }
     }
 }

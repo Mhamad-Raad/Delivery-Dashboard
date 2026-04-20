@@ -4,21 +4,19 @@ namespace DeliveryDash.Application.Abstracts.IRepository
 {
     public interface ICategoryRepository
     {
-        Task<Catagory?> GetByIdAsync(int id);
-        Task<Catagory?> GetByNameAsync(string name);
-        Task<IEnumerable<Catagory>> GetAllCategoriesAsync();
-        Task<IEnumerable<Catagory>> GetTopLevelCategoriesAsync();
-        Task<IEnumerable<Catagory>> GetSubCategoriesAsync(int parentCategoryId);
-        Task<(IEnumerable<Catagory> Categories, int Total)> GetCategoriesPagedAsync(
+        Task<Category?> GetByIdAsync(int id);
+        Task<IEnumerable<Category>> GetByVendorIdAsync(int vendorId);
+        Task<(IEnumerable<Category> Categories, int Total)> GetPagedAsync(
             int page,
             int limit,
-            string? searchName = null,
-            int? parentCategoryId = null);
-        Task<Catagory> CreateAsync(Catagory category);
-        Task<Catagory> UpdateAsync(Catagory category);
+            int? vendorId = null,
+            string? searchName = null);
+        Task<Category> CreateAsync(Category category);
+        Task<Category> UpdateAsync(Category category);
         Task DeleteAsync(int id);
-        Task<bool> ExistsByNameAsync(string name);
-        Task<bool> HasSubCategoriesAsync(int categoryId);
-        Task<bool> HasProductsAsync(int categoryId);
+        Task<bool> ExistsByNameForVendorAsync(int vendorId, string name);
+        Task<int> CountByVendorIdAsync(int vendorId);
+        Task<int> CountProductsAsync(int categoryId);
+        Task<Dictionary<int, int>> CountProductsByCategoryIdsAsync(IEnumerable<int> categoryIds);
     }
 }

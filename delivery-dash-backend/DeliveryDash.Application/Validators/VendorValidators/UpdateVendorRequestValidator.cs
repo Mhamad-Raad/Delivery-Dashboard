@@ -25,9 +25,9 @@ namespace DeliveryDash.Application.Validators.VendorValidators
                 .WithMessage("Closing time must be after opening time")
                 .When(x => x.OpeningTime.HasValue && x.CloseTime.HasValue);
 
-            RuleFor(x => x.Type)
-                .IsInEnum().WithMessage("Invalid vendor type")
-                .When(x => x.Type.HasValue);
+            RuleFor(x => x.VendorCategoryId)
+                .GreaterThan(0).WithMessage("Vendor category must be valid")
+                .When(x => x.VendorCategoryId.HasValue);
         }
 
         private static bool BeAValidUrl(string? url)

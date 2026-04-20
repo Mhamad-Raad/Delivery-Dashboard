@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Category System — Class Diagram</title>
+<style>
+  body { margin: 0; padding: 40px; background: #fafafa; font-family: -apple-system, Segoe UI, sans-serif; }
+  h1 { margin: 0 0 8px; color: #222; }
+  .sub { color: #666; margin-bottom: 24px; font-size: 14px; }
+  #diagram { background: white; padding: 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .legend { margin-top: 20px; font-size: 13px; color: #444; line-height: 1.6; }
+  .legend code { background: #eef; padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>Category System — New Model (Class Diagram)</h1>
+<div class="sub">Two taxonomies: <code>VendorCategory</code> is global (admin-owned); <code>Category</code> is scoped per-vendor (vendor-owned). <code>VendorType</code> enum is removed.</div>
+<div id="diagram">
+<pre class="mermaid">
+classDiagram
+    direction LR
+
+    class VendorCategory {
+        +int Id
+        +string Name (unique)
+        +string? Description
+        +bool IsActive
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        --
+        Admin-managed global taxonomy
+        Seeded from VendorType enum values
+    }
+
+    class Vendor {
+        +int Id
+        +Guid UserId
+        +string Name
+        +string Description
+        +string? ProfileImageUrl
+        +TimeSpan OpeningTime
+        +TimeSpan CloseTime
+        +int VendorCategoryId  NEW
+        --
+        Type : VendorType  ← REMOVED
+        Exactly one store category
+    }
+
+    class Category {
+        +int Id
+        +int VendorId  NEW
+        +string Name (unique per vendor)
+        +string? Description
+        +int? SortOrder
+        --
+        ParentCategoryId ← REMOVED (flat)
+        SubCategories[]  ← REMOVED
+        Vendor-owned, flat
+    }
+
+    class Product {
+        +int Id
+        +int VendorId
+        +int? CategoryId
+        +string Name
+        +decimal Price
+        --
+        Validator: Category.VendorId
+        must equal Product.VendorId
+    }
+
+    class User {
+        +Guid Id
+        +string Email
+        +Role Role
+    }
+
+    class Role {
+        &lt;&lt;enumeration&gt;&gt;
+        SuperAdmin = 0
+        Admin = 1
+        Vendor = 2
+        Customer = 3
+        Driver = 4
+        VendorStaff = 5
+    }
+
+    VendorCategory "1" --> "0..*" Vendor : classifies
+    User "1" --> "0..1" Vendor : owns (role=Vendor)
+    Vendor "1" --> "0..*" Category : owns menu sections
+    Vendor "1" --> "0..*" Product : sells
+    Category "1" --> "0..*" Product : groups (nullable)
+    User ..> Role : has role
+</pre>
+</div>
+
+<div class="legend">
+<strong>Key changes:</strong>
+<ul>
+  <li><code>VendorType</code> enum → <code>VendorCategory</code> entity + FK on <code>Vendor</code>.</li>
+  <li><code>Catagory</code> (typo) → <code>Category</code>; adds required <code>VendorId</code>, drops <code>ParentCategoryId</code> (flat).</li>
+  <li><code>Product.CategoryId</code> stays nullable; service-layer validator ensures the referenced category belongs to the same vendor.</li>
+</ul>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', themeVariables: { fontSize: '14px' }, flowchart: { useMaxWidth: false }, class: { useMaxWidth: false } });
+</script>
+</body>
+</html>

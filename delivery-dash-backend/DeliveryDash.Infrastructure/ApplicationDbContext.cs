@@ -16,7 +16,8 @@ namespace DeliveryDash.Infrastructure
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<VendorStaff> VendorStaff { get; set; }
         public DbSet<Product> Products { get; set; }
-        public DbSet<Catagory> Categories { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<VendorCategory> VendorCategories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Notification> Notifications { get; set; }

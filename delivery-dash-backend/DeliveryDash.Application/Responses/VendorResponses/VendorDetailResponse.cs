@@ -1,5 +1,3 @@
-using DeliveryDash.Domain.Enums;
-
 namespace DeliveryDash.Application.Responses.VendorResponses
 {
     public class VendorDetailResponse
@@ -11,7 +9,8 @@ namespace DeliveryDash.Application.Responses.VendorResponses
         public string? UserProfileImageUrl { get; set; }
         public TimeSpan OpeningTime { get; set; }
         public TimeSpan CloseTime { get; set; }
-        public string Type { get; set; } = string.Empty;
+        public int VendorCategoryId { get; set; }
+        public string VendorCategoryName { get; set; } = string.Empty;
         public Guid UserId { get; set; }
         public string Phone { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;

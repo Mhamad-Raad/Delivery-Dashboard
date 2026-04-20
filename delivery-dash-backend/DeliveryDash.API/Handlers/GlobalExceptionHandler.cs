@@ -1,7 +1,8 @@
-﻿using DeliveryDash.Domain.Exceptions;
+using DeliveryDash.Domain.Exceptions;
 using DeliveryDash.Domain.Exceptions.AddressExceptions;
 using DeliveryDash.Domain.Exceptions.UserExceptions;
 using DeliveryDash.Domain.Exceptions.VendorExceptions;
+using DeliveryDash.Domain.Exceptions.VendorCategoryExceptions;
 using DeliveryDash.Domain.Exceptions.ProductExceptions;
 using DeliveryDash.Domain.Exceptions.CategoryExceptions;
 using Microsoft.AspNetCore.Diagnostics;
@@ -12,7 +13,7 @@ namespace DeliveryDash.API.Handlers
     public class GlobalExceptionHandler : IExceptionHandler
     {
         private readonly ILogger<GlobalExceptionHandler> _logger;
-        
+
         public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
         {
             _logger = logger;
@@ -68,6 +69,11 @@ namespace DeliveryDash.API.Handlers
                 UserAlreadyHasVendorException => (HttpStatusCode.Conflict, exception.Message, null),
                 UserNotVendorRoleException => (HttpStatusCode.BadRequest, exception.Message, null),
 
+                // Vendor category-related
+                VendorCategoryNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
+                DuplicateVendorCategoryNameException => (HttpStatusCode.Conflict, exception.Message, null),
+                VendorCategoryInUseException => (HttpStatusCode.Conflict, exception.Message, null),
+
                 // Vendor staff-related
                 VendorStaffNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
                 UserAlreadyVendorStaffException => (HttpStatusCode.Conflict, exception.Message, null),
@@ -79,8 +85,8 @@ namespace DeliveryDash.API.Handlers
                 // Category-related
                 CategoryNotFoundException => (HttpStatusCode.NotFound, exception.Message, null),
                 DuplicateCategoryNameException => (HttpStatusCode.Conflict, exception.Message, null),
-                CategoryHasSubCategoriesException => (HttpStatusCode.Conflict, exception.Message, null),
-                CategoryHasProductsException => (HttpStatusCode.Conflict, exception.Message, null),
+                CategoryLimitReachedException => (HttpStatusCode.Conflict, exception.Message, null),
+                CategoryVendorMismatchException => (HttpStatusCode.Forbidden, exception.Message, null),
 
                 // Validation - with null safety
                 ValidationException validationEx => (
