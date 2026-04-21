@@ -57,7 +57,9 @@ const VendorProfile = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (profile) {
+    // Wait until BOTH profile and categories are loaded before seeding the form —
+    // Radix Select can't resolve the label for a value whose SelectItem isn't mounted yet.
+    if (profile && categories.length > 0) {
       setFormData({
         Name: profile.name || '',
         Description: profile.description || '',
@@ -67,7 +69,16 @@ const VendorProfile = () => {
       });
       setPreviewImage(profile.profileImageUrl);
     }
-  }, [profile]);
+  }, [profile, categories]);
+
+  const hasChanges =
+    !!profile &&
+    (formData.Name !== (profile.name || '') ||
+      formData.Description !== (profile.description || '') ||
+      formData.OpeningTime !== (profile.openingTime || '') ||
+      formData.CloseTime !== (profile.closeTime || '') ||
+      formData.VendorCategoryId !== (profile.vendorCategoryId || 0) ||
+      profileImage !== null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -267,7 +278,7 @@ const VendorProfile = () => {
             </div>
 
             <div className='flex justify-end pt-4'>
-              <Button type='submit' disabled={loading}>
+              <Button type='submit' disabled={loading || !hasChanges}>
                 {loading ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
