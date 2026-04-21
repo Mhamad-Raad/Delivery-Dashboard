@@ -13,6 +13,7 @@ namespace DeliveryDash.Domain.Entities
         public DateTime? RefreshTokenExpiresAtUtc { get; set; }
         public string PhoneNumber { get; set; }
         public string? ProfileImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public static User Create(string firstName, string lastName, string email, string phoneNumber)
         {

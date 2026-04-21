@@ -26,6 +26,12 @@ namespace DeliveryDash.Infrastructure.Configurations
             builder.Property(v => v.VendorCategoryId)
                 .IsRequired();
 
+            builder.Property(v => v.CreatedAt)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+            builder.HasIndex(v => v.CreatedAt)
+                .HasDatabaseName("IX_Vendors_CreatedAt");
+
             builder.HasOne(v => v.VendorCategory)
                 .WithMany(vc => vc.Vendors)
                 .HasForeignKey(v => v.VendorCategoryId)

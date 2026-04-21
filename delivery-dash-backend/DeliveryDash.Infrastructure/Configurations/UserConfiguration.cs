@@ -21,6 +21,12 @@ namespace DeliveryDash.Infrastructure.Configurations
                 .HasMaxLength(20)
                 .IsRequired();
 
+            builder.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+            builder.HasIndex(u => u.CreatedAt)
+                .HasDatabaseName("IX_Users_CreatedAt");
+
             // B-tree indexes
             builder.HasIndex(u => u.Email)
                 .HasDatabaseName("IX_Users_Email");
