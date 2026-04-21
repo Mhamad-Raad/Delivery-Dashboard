@@ -119,6 +119,194 @@ namespace DeliveryDash.API.Controllers
             return File(bytes, "text/csv", fileName);
         }
 
+        [HttpGet("admin/export/vendors.csv")]
+        [EndpointDescription("Streams a CSV export of vendors that had at least one order in the given UTC window. Columns: VendorId, Name, Category, OrderCount, Revenue, CreatedAtUtc. Restricted to SuperAdmin and Admin roles.")]
+        public async Task<IActionResult> ExportVendorsCsv([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            if (to < from) return BadRequest(new { message = "'to' must be >= 'from'." });
+
+            var fromUtc = DateTime.SpecifyKind(from, DateTimeKind.Utc);
+            var toUtc = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+
+            var rows = await _db.Orders
+                .Where(o => o.CreatedAt >= fromUtc && o.CreatedAt <= toUtc)
+                .GroupBy(o => o.VendorId)
+                .Select(g => new
+                {
+                    VendorId = g.Key,
+                    OrderCount = g.Count(),
+                    Revenue = g.Where(o => o.Status == OrderStatus.Delivered).Sum(o => o.Subtotal)
+                })
+                .Join(_db.Vendors, x => x.VendorId, v => v.Id,
+                    (x, v) => new { x.VendorId, v.Name, v.VendorCategoryId, v.CreatedAt, x.OrderCount, x.Revenue })
+                .Join(_db.VendorCategories, x => x.VendorCategoryId, vc => vc.Id,
+                    (x, vc) => new { x.VendorId, x.Name, CategoryName = vc.Name, x.CreatedAt, x.OrderCount, x.Revenue })
+                .OrderByDescending(x => x.Revenue)
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("VendorId,Name,Category,OrderCount,Revenue,CreatedAtUtc");
+            var ci = CultureInfo.InvariantCulture;
+            foreach (var r in rows)
+            {
+                sb.Append(r.VendorId).Append(',');
+                sb.Append(Csv(r.Name)).Append(',');
+                sb.Append(Csv(r.CategoryName)).Append(',');
+                sb.Append(r.OrderCount).Append(',');
+                sb.Append(r.Revenue.ToString(ci)).Append(',');
+                sb.Append(r.CreatedAt.ToString("o", ci)).AppendLine();
+            }
+
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv",
+                $"vendors_{fromUtc:yyyyMMdd}_{toUtc:yyyyMMdd}.csv");
+        }
+
+        [HttpGet("admin/export/drivers.csv")]
+        [EndpointDescription("Streams a CSV export of drivers with completed deliveries in the given UTC window. Columns: DriverId, Name, Deliveries, AvgDeliveryMinutes. Delivery time is measured from driver acceptance (RespondedAt) to order completion (CompletedAt). Restricted to SuperAdmin and Admin roles.")]
+        public async Task<IActionResult> ExportDriversCsv([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            if (to < from) return BadRequest(new { message = "'to' must be >= 'from'." });
+
+            var fromUtc = DateTime.SpecifyKind(from, DateTimeKind.Utc);
+            var toUtc = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+
+            var raw = await _db.OrderAssignments
+                .Where(a => a.Status == OrderAssignmentStatus.Accepted &&
+                            a.Order.Status == OrderStatus.Delivered &&
+                            a.Order.CompletedAt.HasValue &&
+                            a.Order.CompletedAt >= fromUtc &&
+                            a.Order.CompletedAt <= toUtc &&
+                            a.RespondedAt.HasValue)
+                .Select(a => new
+                {
+                    a.DriverId,
+                    Name = a.Driver.FirstName + " " + a.Driver.LastName,
+                    RespondedAt = a.RespondedAt!.Value,
+                    CompletedAt = a.Order.CompletedAt!.Value
+                })
+                .ToListAsync();
+
+            var grouped = raw
+                .GroupBy(r => new { r.DriverId, r.Name })
+                .Select(g => new
+                {
+                    g.Key.DriverId,
+                    g.Key.Name,
+                    Deliveries = g.Count(),
+                    AvgMinutes = g.Average(r => (r.CompletedAt - r.RespondedAt).TotalMinutes)
+                })
+                .OrderByDescending(x => x.Deliveries)
+                .ToList();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("DriverId,Name,Deliveries,AvgDeliveryMinutes");
+            var ci = CultureInfo.InvariantCulture;
+            foreach (var r in grouped)
+            {
+                sb.Append(r.DriverId).Append(',');
+                sb.Append(Csv(r.Name)).Append(',');
+                sb.Append(r.Deliveries).Append(',');
+                sb.Append(Math.Round(r.AvgMinutes, 2).ToString(ci)).AppendLine();
+            }
+
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv",
+                $"drivers_{fromUtc:yyyyMMdd}_{toUtc:yyyyMMdd}.csv");
+        }
+
+        [HttpGet("admin/export/customers.csv")]
+        [EndpointDescription("Streams a CSV export of customers with at least one order in the given UTC window. Columns: CustomerId, Name, Email, OrderCount, TotalSpent. TotalSpent is the sum of TotalAmount across delivered orders only. Restricted to SuperAdmin and Admin roles.")]
+        public async Task<IActionResult> ExportCustomersCsv([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            if (to < from) return BadRequest(new { message = "'to' must be >= 'from'." });
+
+            var fromUtc = DateTime.SpecifyKind(from, DateTimeKind.Utc);
+            var toUtc = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+
+            var rows = await _db.Orders
+                .Where(o => o.CreatedAt >= fromUtc && o.CreatedAt <= toUtc)
+                .GroupBy(o => o.UserId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    OrderCount = g.Count(),
+                    TotalSpent = g.Where(o => o.Status == OrderStatus.Delivered).Sum(o => o.TotalAmount)
+                })
+                .Join(_db.Users, x => x.UserId, u => u.Id,
+                    (x, u) => new
+                    {
+                        x.UserId,
+                        Name = u.FirstName + " " + u.LastName,
+                        u.Email,
+                        x.OrderCount,
+                        x.TotalSpent
+                    })
+                .OrderByDescending(x => x.TotalSpent)
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("CustomerId,Name,Email,OrderCount,TotalSpent");
+            var ci = CultureInfo.InvariantCulture;
+            foreach (var r in rows)
+            {
+                sb.Append(r.UserId).Append(',');
+                sb.Append(Csv(r.Name)).Append(',');
+                sb.Append(Csv(r.Email)).Append(',');
+                sb.Append(r.OrderCount).Append(',');
+                sb.Append(r.TotalSpent.ToString(ci)).AppendLine();
+            }
+
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv",
+                $"customers_{fromUtc:yyyyMMdd}_{toUtc:yyyyMMdd}.csv");
+        }
+
+        [HttpGet("admin/export/tickets.csv")]
+        [EndpointDescription("Streams a CSV export of support tickets opened or resolved in the given UTC window. Columns: TicketNumber, Subject, Status, Priority, UserId, CreatedAtUtc, ResolvedAtUtc, ResolutionHours. Restricted to SuperAdmin and Admin roles.")]
+        public async Task<IActionResult> ExportTicketsCsv([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            if (to < from) return BadRequest(new { message = "'to' must be >= 'from'." });
+
+            var fromUtc = DateTime.SpecifyKind(from, DateTimeKind.Utc);
+            var toUtc = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+
+            var rows = await _db.SupportTickets
+                .Where(t => (t.CreatedAt >= fromUtc && t.CreatedAt <= toUtc) ||
+                            (t.ResolvedAt.HasValue && t.ResolvedAt >= fromUtc && t.ResolvedAt <= toUtc))
+                .Select(t => new
+                {
+                    t.TicketNumber,
+                    t.Subject,
+                    t.Status,
+                    t.Priority,
+                    t.UserId,
+                    t.CreatedAt,
+                    t.ResolvedAt
+                })
+                .OrderBy(t => t.CreatedAt)
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("TicketNumber,Subject,Status,Priority,UserId,CreatedAtUtc,ResolvedAtUtc,ResolutionHours");
+            var ci = CultureInfo.InvariantCulture;
+            foreach (var r in rows)
+            {
+                var hours = r.ResolvedAt.HasValue
+                    ? Math.Round((r.ResolvedAt.Value - r.CreatedAt).TotalHours, 2).ToString(ci)
+                    : "";
+
+                sb.Append(Csv(r.TicketNumber)).Append(',');
+                sb.Append(Csv(r.Subject)).Append(',');
+                sb.Append(r.Status).Append(',');
+                sb.Append(r.Priority).Append(',');
+                sb.Append(r.UserId).Append(',');
+                sb.Append(r.CreatedAt.ToString("o", ci)).Append(',');
+                sb.Append(r.ResolvedAt?.ToString("o", ci) ?? "").Append(',');
+                sb.Append(hours).AppendLine();
+            }
+
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv",
+                $"tickets_{fromUtc:yyyyMMdd}_{toUtc:yyyyMMdd}.csv");
+        }
+
         private static string Csv(string? value)
         {
             if (string.IsNullOrEmpty(value)) return "";
