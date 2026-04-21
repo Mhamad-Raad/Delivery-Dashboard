@@ -30,7 +30,7 @@ namespace DeliveryDash.Application.Validators.UserValidator
 
             RuleFor(x => x.PhoneNumber)
                 .NotEmptyWithException("Phone number")
-                .Matches(@"^\d+$").WithMessage("Phone number must contain only numeric digits");
+                .Matches(@"^\d{1,11}$").WithMessage("Phone number must contain only digits and be at most 11 digits.");
 
             RuleFor(x => x.Role)
                 .NotNull()

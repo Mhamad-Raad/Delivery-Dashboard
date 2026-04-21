@@ -40,6 +40,11 @@ const Profile = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
+    if (id === 'phoneNumber') {
+      const digits = value.replace(/\D/g, '').slice(0, 11);
+      setFormData((prev) => ({ ...prev, phoneNumber: digits }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 

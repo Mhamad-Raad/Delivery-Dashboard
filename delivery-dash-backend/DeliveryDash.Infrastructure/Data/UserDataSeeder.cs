@@ -14,13 +14,13 @@ namespace DeliveryDash.Infrastructure.Data
         {
             return new List<(User, string, string)>
             {
-                (CreateUser(AdminUserId,    "Hama", "Raad",     "hamaraad883@gmail.com", "+9647700000001"),
+                (CreateUser(AdminUserId,    "Hama", "Raad",     "hamaraad883@gmail.com", "07700000001"),
                     IdentityRoleConstant.Admin,    "hamagyanH1"),
-                (CreateUser(VendorUserId,   "Bako", "Vendor",   "bako@gmail.com",        "+9647700000002"),
+                (CreateUser(VendorUserId,   "Bako", "Vendor",   "bako@gmail.com",        "07700000002"),
                     IdentityRoleConstant.Vendor,   "bakogyanB1"),
-                (CreateUser(CustomerUserId, "Cass", "Customer", "cass@gmail.com",        "+9647700000003"),
+                (CreateUser(CustomerUserId, "Cass", "Customer", "cass@gmail.com",        "07700000003"),
                     IdentityRoleConstant.Customer, "cassgyanC1"),
-                (CreateUser(DriverUserId,   "Dara", "Driver",   "dara@gmail.com",        "+9647700000004"),
+                (CreateUser(DriverUserId,   "Dara", "Driver",   "dara@gmail.com",        "07700000004"),
                     IdentityRoleConstant.Driver,   "daragyanD1"),
             };
         }

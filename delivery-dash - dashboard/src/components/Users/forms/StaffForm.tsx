@@ -213,9 +213,11 @@ export default function StaffForm({ formData, onInputChange, errors = {} }: Staf
             <Input
               id='admin-phone'
               type='tel'
+              inputMode='numeric'
+              maxLength={11}
               placeholder={t('forms.phonePlaceholder')}
               value={formData.phoneNumber}
-              onChange={(e) => onInputChange('phoneNumber', e.target.value)}
+              onChange={(e) => onInputChange('phoneNumber', e.target.value.replace(/\D/g, '').slice(0, 11))}
               className='h-11'
               aria-invalid={!!errors.phoneNumber}
             />

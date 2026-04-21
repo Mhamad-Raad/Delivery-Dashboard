@@ -114,6 +114,8 @@ const EditProfileCard = ({
             <Input
               id='phoneNumber'
               type='tel'
+              inputMode='numeric'
+              maxLength={11}
               placeholder={t('placeholders.phone')}
               value={formData.phoneNumber}
               onChange={onChange}

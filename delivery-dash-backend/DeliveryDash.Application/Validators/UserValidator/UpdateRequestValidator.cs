@@ -19,7 +19,7 @@ public class UpdateRequestValidator : AbstractValidator<UpdateUserRequest>
 
         RuleFor(x => x.PhoneNumber)
             .NotEmpty().WithMessage("Phone number is required and cannot be empty.")
-            .Matches(@"^\d+$").WithMessage("Phone number must contain only numeric digits");
+            .Matches(@"^\d{1,11}$").WithMessage("Phone number must contain only digits and be at most 11 digits.");
 
         RuleFor(x => x.Role)
             .NotNull().WithMessage("Role is required.")

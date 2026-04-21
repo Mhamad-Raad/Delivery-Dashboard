@@ -67,6 +67,8 @@ export default function CreateUser() {
     }
     if (!formData.phoneNumber.trim()) {
       errors.phoneNumber = t('forms.validation.phoneRequired');
+    } else if (!/^\d{1,11}$/.test(formData.phoneNumber)) {
+      errors.phoneNumber = t('forms.validation.phoneInvalid');
     }
 
     // Password validation

@@ -113,7 +113,7 @@
       "passwordNumber": "Password must contain at least one number",
       "passwordSpecial": "Password must contain at least one special character",
       "phoneRequired": "Phone number is required",
-      "phoneInvalid": "Please enter a valid phone number"
+      "phoneInvalid": "Phone number must be digits only and at most 11 digits"
     },
     "optional": "(Optional)",
     "building": "Building",
