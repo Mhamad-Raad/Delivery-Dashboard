@@ -5,7 +5,6 @@ import {
   Home,
   Users,
   Package,
-  BarChart3,
   Settings,
   FileText,
   ShoppingCart,
@@ -91,11 +90,6 @@ const mainNavItems = [
 
 // Management items
 const managementItems = [
-  {
-    titleKey: 'analytics',
-    url: '#',
-    icon: BarChart3,
-  },
   {
     titleKey: 'reports',
     url: '/reports',
