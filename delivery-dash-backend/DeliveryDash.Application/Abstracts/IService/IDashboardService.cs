@@ -7,5 +7,6 @@ namespace DeliveryDash.Application.Abstracts.IService
         Task<AdminDashboardResponse> GetAdminDashboardAsync();
         Task InvalidateAdminDashboardCacheAsync();
         Task<VendorDashboardResponse> GetVendorDashboardAsync(int vendorId);
+        Task<AdminAnalyticsResponse> GetAdminAnalyticsAsync(DateTime fromUtc, DateTime toUtc, string granularity);
     }
 }

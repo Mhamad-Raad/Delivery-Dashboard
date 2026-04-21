@@ -45,9 +45,6 @@ namespace DeliveryDash.Application.Services
             {
                 TotalUsers = await _dashboardRepository.GetTotalUsersCountAsync(),
                 ActiveVendors = await _dashboardRepository.GetActiveVendorsCountAsync(),
-                TotalBuildings = await _dashboardRepository.GetTotalBuildingsCountAsync(),
-                TotalApartments = await _dashboardRepository.GetTotalApartmentsCountAsync(),
-                OccupiedApartments = await _dashboardRepository.GetOccupiedApartmentsCountAsync(),
                 TotalProducts = await _dashboardRepository.GetTotalProductsCountAsync(),
                 PendingRequests = await _dashboardRepository.GetPendingSupportRequestsCountAsync()
             };
@@ -103,6 +100,135 @@ namespace DeliveryDash.Application.Services
             await _cacheService.SetAsync(cacheKey, dashboardData, cacheDuration);
 
             return dashboardData;
+        }
+
+        public async Task<AdminAnalyticsResponse> GetAdminAnalyticsAsync(DateTime fromUtc, DateTime toUtc, string granularity)
+        {
+            granularity = string.IsNullOrWhiteSpace(granularity) ? "day" : granularity.ToLowerInvariant();
+            if (granularity != "day" && granularity != "week" && granularity != "month")
+                granularity = "day";
+
+            var cacheKey = $"dashboard:admin:analytics:{fromUtc:yyyyMMddHHmm}:{toUtc:yyyyMMddHHmm}:{granularity}";
+            var cached = await _cacheService.GetAsync<AdminAnalyticsResponse>(cacheKey);
+            if (cached != null)
+            {
+                _logger.LogInformation("Admin analytics cache hit {Key}", cacheKey);
+                return cached;
+            }
+
+            var ordersTotals = await _dashboardRepository.GetOrderTotalsAsync(fromUtc, toUtc);
+            var ordersSeries = await _dashboardRepository.GetOrderTimeSeriesAsync(fromUtc, toUtc, granularity);
+            var statusBreakdown = await _dashboardRepository.GetOrderStatusBreakdownAsync(fromUtc, toUtc);
+            var revenueByCategory = await _dashboardRepository.GetRevenueByVendorCategoryAsync(fromUtc, toUtc);
+
+            var topVendorsRevenue = await _dashboardRepository.GetTopVendorsByRevenueAsync(fromUtc, toUtc, 10);
+            var topVendorsOrders = await _dashboardRepository.GetTopVendorsByOrdersAsync(fromUtc, toUtc, 10);
+            var vendorSignups = await _dashboardRepository.GetVendorSignupsCountAsync(fromUtc, toUtc);
+            var vendorActivity = await _dashboardRepository.GetVendorActivityCountsAsync(fromUtc, toUtc);
+
+            var topDrivers = await _dashboardRepository.GetTopDriversByDeliveriesAsync(fromUtc, toUtc, 10);
+            var avgDeliveryMinutes = await _dashboardRepository.GetAvgDeliveryMinutesAsync(fromUtc, toUtc);
+            var activeDrivers = await _dashboardRepository.GetActiveDriversCountAsync(fromUtc, toUtc);
+
+            var customerSignups = await _dashboardRepository.GetCustomerSignupsCountAsync(fromUtc, toUtc);
+            var customerSignupSeries = await _dashboardRepository.GetCustomerSignupSeriesAsync(fromUtc, toUtc, granularity);
+            var topSpenders = await _dashboardRepository.GetTopSpendersAsync(fromUtc, toUtc, 10);
+            var returningVsOneTime = await _dashboardRepository.GetReturningVsOneTimeCustomersAsync(fromUtc, toUtc);
+
+            var support = await _dashboardRepository.GetSupportKpisAsync(fromUtc, toUtc);
+
+            var response = new AdminAnalyticsResponse
+            {
+                FromUtc = fromUtc,
+                ToUtc = toUtc,
+                Granularity = granularity,
+                Financial = new FinancialSection
+                {
+                    TotalRevenue = ordersTotals.Revenue,
+                    Gmv = ordersTotals.Gmv,
+                    AvgOrderValue = ordersTotals.Delivered == 0 ? 0 : ordersTotals.Revenue / ordersTotals.Delivered,
+                    RevenueSeries = ordersSeries
+                        .Select(s => new TimePoint { Bucket = s.Bucket, Value = s.Revenue })
+                        .ToList(),
+                    RevenueByCategory = revenueByCategory
+                        .Select(r => new NamedAmount { Name = r.CategoryName, Amount = r.Revenue })
+                        .ToList()
+                },
+                Orders = new OrdersSection
+                {
+                    Total = ordersTotals.Total,
+                    CancellationRate = ordersTotals.Total == 0 ? 0 : Math.Round((decimal)ordersTotals.Cancelled / ordersTotals.Total, 4),
+                    OrdersSeries = ordersSeries
+                        .Select(s => new TimePoint { Bucket = s.Bucket, Value = s.Orders })
+                        .ToList(),
+                    StatusBreakdown = statusBreakdown
+                        .Select(s => new StatusCount { Status = s.Status.ToString(), Count = s.Count })
+                        .ToList()
+                },
+                Vendors = new VendorsSection
+                {
+                    NewSignups = vendorSignups,
+                    ActiveCount = vendorActivity.Active,
+                    InactiveCount = vendorActivity.Inactive,
+                    TopByRevenue = topVendorsRevenue.Select(v => new VendorRanking
+                    {
+                        VendorId = v.VendorId,
+                        Name = v.Name,
+                        CategoryName = v.CategoryName,
+                        OrderCount = v.OrderCount,
+                        Revenue = v.Revenue
+                    }).ToList(),
+                    TopByOrders = topVendorsOrders.Select(v => new VendorRanking
+                    {
+                        VendorId = v.VendorId,
+                        Name = v.Name,
+                        CategoryName = v.CategoryName,
+                        OrderCount = v.OrderCount,
+                        Revenue = v.Revenue
+                    }).ToList()
+                },
+                Drivers = new DriversSection
+                {
+                    ActiveCount = activeDrivers,
+                    AvgDeliveryMinutes = avgDeliveryMinutes,
+                    TopByDeliveries = topDrivers.Select(d => new DriverRanking
+                    {
+                        DriverId = d.DriverId,
+                        Name = d.Name,
+                        Deliveries = d.Deliveries,
+                        AvgDeliveryMinutes = d.AvgMinutes
+                    }).ToList()
+                },
+                Customers = new CustomersSection
+                {
+                    NewSignups = customerSignups,
+                    Returning = returningVsOneTime.Returning,
+                    OneTime = returningVsOneTime.OneTime,
+                    SignupSeries = customerSignupSeries
+                        .Select(s => new TimePoint { Bucket = s.Bucket, Value = s.Count })
+                        .ToList(),
+                    TopSpenders = topSpenders.Select(c => new CustomerRanking
+                    {
+                        CustomerId = c.CustomerId,
+                        Name = c.Name,
+                        OrderCount = c.OrderCount,
+                        TotalSpent = c.TotalSpent
+                    }).ToList()
+                },
+                Support = new SupportSection
+                {
+                    Opened = support.Opened,
+                    Resolved = support.Resolved,
+                    OpenBacklog = support.OpenBacklog,
+                    AvgResolutionHours = support.AvgResolutionHours
+                }
+            };
+
+            var cacheDuration = TimeSpan.FromMinutes(_cacheOptions.AdminDashboardCacheDurationMinutes);
+            await _cacheService.SetAsync(cacheKey, response, cacheDuration);
+            _logger.LogInformation("Admin analytics computed and cached {Key}", cacheKey);
+
+            return response;
         }
     }
 }

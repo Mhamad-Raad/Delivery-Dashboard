@@ -1750,7 +1750,14 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260420011548_ReplaceCategorySystem') THEN
-    CREATE UNIQUE INDEX "IX_VendorCategories_Name_Trgm" ON "VendorCategories" USING gin ("Name" gin_trgm_ops);
+    CREATE UNIQUE INDEX "UX_VendorCategories_Name" ON "VendorCategories" ("Name");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260420011548_ReplaceCategorySystem') THEN
+    CREATE INDEX "IX_VendorCategories_Name_Trgm" ON "VendorCategories" USING gin ("Name" gin_trgm_ops);
     END IF;
 END $EF$;
 
@@ -1773,6 +1780,42 @@ BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260420011548_ReplaceCategorySystem') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
     VALUES ('20260420011548_ReplaceCategorySystem', '9.0.10');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260421231617_AddCreatedAtToUserAndVendor') THEN
+    ALTER TABLE "Vendors" ADD "CreatedAt" timestamp with time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260421231617_AddCreatedAtToUserAndVendor') THEN
+    ALTER TABLE "AspNetUsers" ADD "CreatedAt" timestamp with time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260421231617_AddCreatedAtToUserAndVendor') THEN
+    CREATE INDEX "IX_Vendors_CreatedAt" ON "Vendors" ("CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260421231617_AddCreatedAtToUserAndVendor') THEN
+    CREATE INDEX "IX_Users_CreatedAt" ON "AspNetUsers" ("CreatedAt");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260421231617_AddCreatedAtToUserAndVendor') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20260421231617_AddCreatedAtToUserAndVendor', '9.0.10');
     END IF;
 END $EF$;
 COMMIT;
