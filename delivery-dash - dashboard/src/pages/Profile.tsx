@@ -8,6 +8,7 @@ import { fetchMe } from '@/store/slices/meSlice';
 import ProfileOverviewCard from '@/components/Profile/ProfileOverviewCard';
 import EditProfileCard from '@/components/Profile/EditProfileCard';
 import { compressImage } from '@/lib/imageCompression';
+import { validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 
 const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -51,6 +52,12 @@ const Profile = () => {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
       try {
         const compressed = await compressImage(file);
         setImageFile(compressed);

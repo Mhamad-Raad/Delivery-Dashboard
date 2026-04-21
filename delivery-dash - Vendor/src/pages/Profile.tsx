@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Camera, Save } from 'lucide-react';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 
 const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -90,6 +91,12 @@ const Profile = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
+        return;
+      }
       setProfileImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -174,7 +181,7 @@ const Profile = () => {
                   type='file'
                   ref={fileInputRef}
                   className='hidden'
-                  accept='image/*'
+                  accept={IMAGE_ACCEPT_ATTR}
                   onChange={handleImageChange}
                 />
               </div>

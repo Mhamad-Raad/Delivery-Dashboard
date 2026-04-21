@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Image as ImageIcon, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { UserFormData } from '@/interfaces/Users.interface';
+import { toast } from 'sonner';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 
 interface UserProfileCardProps {
   formData: UserFormData;
@@ -36,7 +38,15 @@ const UserProfileCard = ({ formData, onInputChange }: UserProfileCardProps) => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) onInputChange('imageFile', file);
+    if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
+        return;
+      }
+      onInputChange('imageFile', file);
+    }
   };
 
   const handleRemoveImage = () => {
@@ -64,7 +74,7 @@ const UserProfileCard = ({ formData, onInputChange }: UserProfileCardProps) => {
             <input
               id='user-photo'
               type='file'
-              accept='image/*'
+              accept={IMAGE_ACCEPT_ATTR}
               className='hidden'
               onChange={handleImageChange}
             />

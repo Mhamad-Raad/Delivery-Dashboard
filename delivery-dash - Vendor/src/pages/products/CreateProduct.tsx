@@ -32,6 +32,7 @@ import {
 
 import { createProduct } from '@/data/Products';
 import { fetchCategories, type CategoryDTO } from '@/data/Categories';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 
 export default function CreateProduct() {
   const navigate = useNavigate();
@@ -71,6 +72,12 @@ export default function CreateProduct() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
+        return;
+      }
       setFormData((prev) => ({ ...prev, photo: file }));
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -222,7 +229,7 @@ export default function CreateProduct() {
               <input
                 id='photo-upload'
                 type='file'
-                accept='image/*'
+                accept={IMAGE_ACCEPT_ATTR}
                 className='hidden'
                 onChange={handlePhotoChange}
               />

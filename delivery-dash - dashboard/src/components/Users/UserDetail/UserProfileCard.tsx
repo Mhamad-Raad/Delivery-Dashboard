@@ -14,6 +14,8 @@ import roles from '@/constants/roles';
 import { Image as ImageIcon, X } from 'lucide-react';
 import type { UserFormData } from '@/interfaces/Users.interface';
 import { compressImage } from '@/lib/imageCompression';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
+import { toast } from 'sonner';
 
 interface UserProfileCardProps {
   formData: UserFormData;
@@ -47,6 +49,12 @@ const UserProfileCard = ({ formData, onInputChange }: UserProfileCardProps) => {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
+        return;
+      }
       try {
         const compressed = await compressImage(file);
         onInputChange('imageFile', compressed);
@@ -80,7 +88,7 @@ const UserProfileCard = ({ formData, onInputChange }: UserProfileCardProps) => {
             <input
               id='user-photo'
               type='file'
-              accept='image/*'
+              accept={IMAGE_ACCEPT_ATTR}
               className='hidden'
               onChange={handleImageChange}
             />

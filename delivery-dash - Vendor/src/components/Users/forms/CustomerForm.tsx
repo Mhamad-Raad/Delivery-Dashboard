@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/select';
 import { Mail, Lock, Building2, Image as ImageIcon, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 
 const buildings = ['Sky Tower', 'Rose Heights', 'Emerald Plaza'];
 const floors = ['1', '2', '3', '4', '5'];
@@ -57,11 +59,20 @@ export default function CustomerForm({
           <input
             id='customer-photo'
             type='file'
-            accept='image/*'
+            accept={IMAGE_ACCEPT_ATTR}
             className='hidden'
-            onChange={(e) =>
-              onInputChange('photo', e.target.files?.[0] || null)
-            }
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const err = validateImageFile(file);
+                if (err) {
+                  toast.error(imageValidationMessage(err));
+                  e.target.value = '';
+                  return;
+                }
+              }
+              onInputChange('photo', file || null);
+            }}
           />
           <label
             htmlFor='customer-photo'

@@ -14,6 +14,8 @@ import {
 import { Mail, Lock, Image as ImageIcon, X } from 'lucide-react';
 import roles from '@/constants/roles';
 import { compressImage } from '@/lib/imageCompression';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
+import { toast } from 'sonner';
 
 type FieldErrors = {
   firstName?: string;
@@ -76,11 +78,17 @@ export default function StaffForm({ formData, onInputChange, errors = {} }: Staf
           <input
             id='admin-photo'
             type='file'
-            accept='image/*'
+            accept={IMAGE_ACCEPT_ATTR}
             className='hidden'
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
+                const err = validateImageFile(file);
+                if (err) {
+                  toast.error(imageValidationMessage(err));
+                  e.target.value = '';
+                  return;
+                }
                 try {
                   const compressed = await compressImage(file);
                   onInputChange('photo', compressed);

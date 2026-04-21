@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 import {
   Select,
   SelectContent,
@@ -46,6 +48,12 @@ export default function ProductInfoCard({
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
+        return;
+      }
       onInputChange('imageFile', file);
     }
   };
@@ -119,7 +127,7 @@ export default function ProductInfoCard({
             <input
               id='photo-upload-edit'
               type='file'
-              accept='image/*'
+              accept={IMAGE_ACCEPT_ATTR}
               className='hidden'
               onChange={handlePhotoChange}
             />

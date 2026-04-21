@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Camera, Mail, Phone, Shield, ImageIcon, X } from 'lucide-react';
 import roles from '@/constants/roles';
+import { IMAGE_ACCEPT_ATTR } from '@/lib/imageValidation';
 
 interface ProfileOverviewCardProps {
   user: {
@@ -70,7 +71,7 @@ const ProfileOverviewCard = ({
               type='file'
               ref={fileInputRef}
               className='hidden'
-              accept='image/*'
+              accept={IMAGE_ACCEPT_ATTR}
               onChange={onImageChange}
             />
             <button

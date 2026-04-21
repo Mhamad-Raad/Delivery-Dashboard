@@ -1,5 +1,7 @@
 import { Image as ImageIcon, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
 
 interface VendorPhotoUploadProps {
   preview: string;
@@ -10,15 +12,28 @@ interface VendorPhotoUploadProps {
 
 const VendorPhotoUpload = ({ preview, onPhotoChange, onPhotoRemove, disabled }: VendorPhotoUploadProps) => {
   const { t } = useTranslation('vendors');
-  
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
+        return;
+      }
+    }
+    onPhotoChange(e);
+  };
+
   return (
     <div className='flex-shrink-0'>
       <div className='relative w-full md:w-56 aspect-square'>
         <input
           id='vendor-photo'
           type='file'
-          accept='image/*'
-          onChange={onPhotoChange}
+          accept={IMAGE_ACCEPT_ATTR}
+          onChange={handleChange}
           disabled={disabled}
           className='hidden'
         />

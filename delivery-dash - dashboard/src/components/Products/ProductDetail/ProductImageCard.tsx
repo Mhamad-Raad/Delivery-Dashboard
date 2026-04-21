@@ -15,6 +15,8 @@ import { ObjectAutoComplete } from '@/components/ObjectAutoComplete';
 import { fetchCategories } from '@/data/Categories';
 import { useTranslation } from 'react-i18next';
 import { compressImage } from '@/lib/imageCompression';
+import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
+import { toast } from 'sonner';
 
 interface ProductImageCardProps {
   name: string;
@@ -71,7 +73,10 @@ const ProductImageCard = ({
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
+      const err = validateImageFile(file);
+      if (err) {
+        toast.error(imageValidationMessage(err));
+        e.target.value = '';
         return;
       }
       try {
@@ -121,7 +126,7 @@ const ProductImageCard = ({
                 ref={fileInputRef}
                 id='product-photo'
                 type='file'
-                accept='image/*'
+                accept={IMAGE_ACCEPT_ATTR}
                 className='hidden'
                 onChange={handleImageChange}
               />
