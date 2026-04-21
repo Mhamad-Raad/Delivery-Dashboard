@@ -1,88 +1,82 @@
 {
   "title": "Reports",
-  "description": "Generate and download comprehensive reports for your mall operations",
-  "categories": {
-    "all": "All Reports",
-    "financial": "Financial",
-    "operations": "Operations",
-    "usersVendors": "Users & Vendors",
-    "buildings": "Buildings"
-  },
-  "reports": {
-    "monthlyRevenue": {
-      "title": "Monthly Revenue Report",
-      "description": "Comprehensive breakdown of revenue by vendor, category, and building"
-    },
-    "vendorPerformance": {
-      "title": "Vendor Performance Report",
-      "description": "Sales performance, ratings, and compliance metrics for all vendors"
-    },
-    "buildingOccupancy": {
-      "title": "Building Occupancy Report",
-      "description": "Occupancy rates, vacant units, and rental income by building"
-    },
-    "userActivity": {
-      "title": "User Activity Report",
-      "description": "User registrations, active users, and engagement metrics"
-    },
-    "orderAnalytics": {
-      "title": "Order Analytics Report",
-      "description": "Order volumes, average order value, and fulfillment metrics"
-    },
-    "maintenance": {
-      "title": "Maintenance & Operations Report",
-      "description": "Maintenance requests, response times, and facility status"
-    },
-    "financialSummary": {
-      "title": "Financial Summary Report",
-      "description": "Income statements, expense tracking, and profit margins"
-    },
-    "vendorCompliance": {
-      "title": "Vendor Compliance Report",
-      "description": "License renewals, health inspections, and regulatory compliance"
-    }
-  },
-  "stats": {
-    "totalReports": "Total Reports",
-    "generatedToday": "Generated Today",
-    "scheduled": "Scheduled",
-    "totalSize": "Total Size"
-  },
-  "frequency": {
-    "daily": "Daily",
-    "weekly": "Weekly",
-    "monthly": "Monthly"
-  },
-  "status": {
-    "ready": "Ready",
-    "generating": "Generating",
-    "active": "Active",
-    "paused": "Paused"
-  },
-  "actions": {
-    "generate": "Generate",
-    "download": "Download",
-    "manageSchedule": "Manage Schedule"
-  },
+  "subtitle": "Analytics across financial, orders, vendors, drivers, customers, and support for the selected period.",
   "filters": {
-    "selectPeriod": "Select period",
-    "today": "Today",
-    "thisWeek": "This Week",
-    "thisMonth": "This Month",
-    "thisQuarter": "This Quarter",
-    "thisYear": "This Year",
-    "customRange": "Custom Range"
+    "from": "From",
+    "to": "To",
+    "granularity": "Granularity",
+    "day": "Daily",
+    "week": "Weekly",
+    "month": "Monthly",
+    "refresh": "Refresh"
   },
-  "scheduled": {
-    "title": "Scheduled Reports",
-    "description": "Automatically generated reports sent to your email",
-    "weeklyOperations": "Weekly Operations Summary",
-    "monthlyFinancial": "Monthly Financial Report",
-    "dailySales": "Daily Sales Report",
-    "everyMonday": "Every Monday at 9:00 AM",
-    "firstOfMonth": "1st of every month at 8:00 AM",
-    "everyDay": "Every day at 6:00 PM"
+  "errorTitle": "Couldn't load analytics",
+  "actions": {
+    "exportCsv": "Export CSV",
+    "downloading": "Downloading...",
+    "retry": "Retry"
   },
-  "lastGenerated": "Last generated: {{time}}",
-  "trendFromLastMonth": "{{trend}} from last month"
+  "loading": "Loading analytics...",
+  "error": "Failed to load analytics.",
+  "noData": "No data in the selected range.",
+  "sections": {
+    "financial": {
+      "title": "Financial",
+      "totalRevenue": "Total Revenue",
+      "gmv": "GMV",
+      "avgOrderValue": "Avg Order Value",
+      "revenueOverTime": "Revenue over time",
+      "revenueByCategory": "Revenue by category"
+    },
+    "orders": {
+      "title": "Orders",
+      "total": "Total Orders",
+      "cancellationRate": "Cancellation Rate",
+      "ordersOverTime": "Orders over time",
+      "statusBreakdown": "Status breakdown",
+      "statuses": {
+        "Pending": "Pending",
+        "Confirmed": "Confirmed",
+        "Preparing": "Preparing",
+        "OutForDelivery": "Out for delivery",
+        "Delivered": "Delivered",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "vendors": {
+      "title": "Vendors",
+      "newSignups": "New signups",
+      "active": "Active",
+      "inactive": "Inactive",
+      "topByRevenue": "Top vendors by revenue",
+      "topByOrders": "Top vendors by orders",
+      "orderCount": "Orders",
+      "revenue": "Revenue"
+    },
+    "drivers": {
+      "title": "Drivers",
+      "activeDrivers": "Active drivers",
+      "avgDeliveryTime": "Avg delivery time (min)",
+      "topByDeliveries": "Top drivers by deliveries",
+      "deliveries": "Deliveries",
+      "avgMinutes": "Avg min"
+    },
+    "customers": {
+      "title": "Customers",
+      "newSignups": "New signups",
+      "returning": "Returning",
+      "oneTime": "One-time",
+      "signupsOverTime": "Signups over time",
+      "topSpenders": "Top spenders",
+      "orderCount": "Orders",
+      "totalSpent": "Total spent"
+    },
+    "support": {
+      "title": "Support",
+      "opened": "Opened",
+      "resolved": "Resolved",
+      "openBacklog": "Open backlog",
+      "avgResolution": "Avg resolution (hrs)"
+    }
+  }
 }
