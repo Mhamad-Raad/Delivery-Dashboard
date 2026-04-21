@@ -18,6 +18,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Camera, Save } from 'lucide-react';
 import { IMAGE_ACCEPT_ATTR, validateImageFile, imageValidationMessage } from '@/lib/imageValidation';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import {
+  fetchActiveVendorCategories,
+  type VendorCategoryDTO,
+} from '@/data/VendorCategory';
 
 const VendorProfile = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,8 +43,9 @@ const VendorProfile = () => {
     Description: '',
     OpeningTime: '',
     CloseTime: '',
-    Type: '',
+    VendorCategoryId: 0,
   });
+  const [categories, setCategories] = useState<VendorCategoryDTO[]>([]);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +53,7 @@ const VendorProfile = () => {
   useEffect(() => {
     // Fetch latest vendor profile on mount
     dispatch(getVendorProfile());
+    fetchActiveVendorCategories().then(setCategories);
   }, [dispatch]);
 
   useEffect(() => {
@@ -50,7 +63,7 @@ const VendorProfile = () => {
         Description: profile.description || '',
         OpeningTime: profile.openingTime || '',
         CloseTime: profile.closeTime || '',
-        Type: profile.type || '',
+        VendorCategoryId: profile.vendorCategoryId || 0,
       });
       setPreviewImage(profile.profileImageUrl);
     }
@@ -174,16 +187,35 @@ const VendorProfile = () => {
                 />
               </div>
 
-              {/* Type */}
+              {/* Vendor Category */}
               <div className='space-y-2'>
-                <Label htmlFor='Type'>{t('vendorProfile.shopType')}</Label>
-                <Input
-                  id='Type'
-                  name='Type'
-                  value={formData.Type}
-                  onChange={handleChange}
-                  required
-                />
+                <Label htmlFor='VendorCategoryId'>
+                  {t('vendorProfile.shopType')}
+                </Label>
+                <Select
+                  value={
+                    formData.VendorCategoryId
+                      ? String(formData.VendorCategoryId)
+                      : ''
+                  }
+                  onValueChange={(v) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      VendorCategoryId: Number(v),
+                    }))
+                  }
+                >
+                  <SelectTrigger id='VendorCategoryId'>
+                    <SelectValue placeholder='Select category' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Opening Time */}

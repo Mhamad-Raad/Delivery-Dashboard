@@ -45,7 +45,7 @@ export const updateVendor = createAsyncThunk(
       Description: string;
       OpeningTime: string;
       CloseTime: string;
-      Type: string;
+      VendorCategoryId: number;
       ProfileImageUrl?: File;
     },
     { rejectWithValue }

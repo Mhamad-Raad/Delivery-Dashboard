@@ -13,13 +13,14 @@ export const fetchMyVendorProfile = async () => {
 
     // Map PascalCase from API to camelCase for internal use
     return {
-      id: data.Id || data.id,
-      name: data.Name || data.name,
-      description: data.Description || data.description,
-      openingTime: data.OpeningTime || data.openingTime,
-      closeTime: data.CloseTime || data.closeTime,
-      type: data.Type || data.type,
-      profileImageUrl: data.ProfileImageUrl || data.profileImageUrl,
+      id: data.Id ?? data.id,
+      name: data.Name ?? data.name,
+      description: data.Description ?? data.description,
+      openingTime: data.OpeningTime ?? data.openingTime,
+      closeTime: data.CloseTime ?? data.closeTime,
+      vendorCategoryId: data.VendorCategoryId ?? data.vendorCategoryId,
+      vendorCategoryName: data.VendorCategoryName ?? data.vendorCategoryName,
+      profileImageUrl: data.ProfileImageUrl ?? data.profileImageUrl,
       // Preserve other fields if they exist
       ...data,
     };
@@ -33,7 +34,7 @@ export const updateMyVendorProfile = async (vendorData: {
   Description: string;
   OpeningTime: string; // "HH:mm:ss"
   CloseTime: string; // "HH:mm:ss"
-  Type: string;
+  VendorCategoryId: number;
   ProfileImageUrl?: File;
 }) => {
   try {
@@ -42,7 +43,7 @@ export const updateMyVendorProfile = async (vendorData: {
     formData.append('Description', vendorData.Description);
     formData.append('OpeningTime', vendorData.OpeningTime);
     formData.append('CloseTime', vendorData.CloseTime);
-    formData.append('Type', vendorData.Type);
+    formData.append('VendorCategoryId', String(vendorData.VendorCategoryId));
 
     if (vendorData.ProfileImageUrl) {
       const compressedFile = await compressImage(vendorData.ProfileImageUrl);

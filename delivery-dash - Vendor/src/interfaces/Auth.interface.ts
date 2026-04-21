@@ -16,7 +16,8 @@ export interface VendorProfileType {
   userProfileImageUrl: string | null;
   openingTime: string;
   closeTime: string;
-  type: string;
+  vendorCategoryId: number;
+  vendorCategoryName: string;
   userId: string;
   phone: string;
   firstName: string;
