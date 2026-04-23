@@ -1,3 +1,4 @@
+using DeliveryDash.Application.Abstracts;
 using DeliveryDash.Application.Abstracts.IRepository;
 using DeliveryDash.Application.Abstracts.IService;
 using DeliveryDash.Application.Responses.OrderResponses;
@@ -23,6 +24,7 @@ namespace DeliveryDash.Application.Services
         private readonly IDriverShiftService _shiftService;
         private readonly IDriverNotificationService _notificationService;
         private readonly INotificationService _userNotificationService;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly OrderDispatchSettings _settings;
         private readonly ILogger<OrderDispatchService> _logger;
 
@@ -34,6 +36,7 @@ namespace DeliveryDash.Application.Services
             IDriverShiftService shiftService,
             IDriverNotificationService notificationService,
             INotificationService userNotificationService,
+            IUnitOfWork unitOfWork,
             IOptions<OrderDispatchSettings> settings,
             ILogger<OrderDispatchService> logger)
         {
@@ -44,6 +47,7 @@ namespace DeliveryDash.Application.Services
             _shiftService = shiftService;
             _notificationService = notificationService;
             _userNotificationService = userNotificationService;
+            _unitOfWork = unitOfWork;
             _settings = settings.Value;
             _logger = logger;
         }
@@ -118,11 +122,15 @@ namespace DeliveryDash.Application.Services
 
         private async Task CancelOrderDueToNoDriverAsync(Order order, CancellationToken ct)
         {
+            var now = DateTime.UtcNow;
+
+            await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
+
             order.Status = OrderStatus.Cancelled;
-            order.CompletedAt = DateTime.UtcNow;
+            order.CancelledAt = now;
+            order.CompletedAt = now;
             await _orderRepository.UpdateAsync(order);
 
-            // Notify customer
             await _userNotificationService.SendNotificationAsync(
                 order.UserId,
                 "Order Cancelled",
@@ -131,7 +139,6 @@ namespace DeliveryDash.Application.Services
                 $"/orders/{order.Id}",
                 $"{{\"orderId\":{order.Id},\"orderNumber\":\"{order.OrderNumber}\",\"reason\":\"NoDriverAvailable\"}}");
 
-            // Notify vendor
             var vendor = await _vendorRepository.GetByIdAsync(order.VendorId);
             if (vendor != null)
             {
@@ -143,6 +150,8 @@ namespace DeliveryDash.Application.Services
                     $"/orders/{order.Id}",
                     $"{{\"orderId\":{order.Id},\"orderNumber\":\"{order.OrderNumber}\",\"reason\":\"NoDriverAvailable\"}}");
             }
+
+            await tx.CommitAsync(ct);
 
             _logger.LogInformation(
                 "Order {OrderId} cancelled due to no driver available after {MaxAttempts} attempts",
@@ -156,32 +165,31 @@ namespace DeliveryDash.Application.Services
                 ?? throw new InvalidOperationException("Assignment not found");
 
             if (assignment.DriverId != driverId)
-            {
                 throw new UnauthorizedAccessException("Driver not authorized for this assignment");
-            }
 
             if (assignment.Status != OrderAssignmentStatus.Pending)
-            {
                 throw new InvalidOperationException($"Assignment is not pending (status: {assignment.Status})");
-            }
 
             if (DateTime.UtcNow > assignment.ExpiresAt)
-            {
                 throw new InvalidOperationException("Assignment has expired");
-            }
+
+            var now = DateTime.UtcNow;
+
+            await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
 
             assignment.Status = OrderAssignmentStatus.Accepted;
-            assignment.RespondedAt = DateTime.UtcNow;
-
+            assignment.RespondedAt = now;
             var updatedAssignment = await _assignmentRepository.UpdateAsync(assignment, ct);
 
-            // Update order status
             var order = await _orderRepository.GetByIdAsync(assignment.OrderId);
             if (order != null)
             {
                 order.Status = OrderStatus.OutForDelivery;
+                order.OutForDeliveryAt = now;
                 await _orderRepository.UpdateAsync(order);
             }
+
+            await tx.CommitAsync(ct);
 
             _logger.LogInformation(
                 "Driver {DriverId} accepted order {OrderId}",
@@ -197,31 +205,28 @@ namespace DeliveryDash.Application.Services
                 ?? throw new InvalidOperationException("Assignment not found");
 
             if (assignment.DriverId != driverId)
-            {
                 throw new UnauthorizedAccessException("Driver not authorized for this assignment");
-            }
 
             if (assignment.Status != OrderAssignmentStatus.Pending)
-            {
                 throw new InvalidOperationException($"Assignment is not pending (status: {assignment.Status})");
+
+            OrderAssignment updatedAssignment;
+            await using (var tx = await _unitOfWork.BeginTransactionAsync(ct))
+            {
+                assignment.Status = OrderAssignmentStatus.Rejected;
+                assignment.RespondedAt = DateTime.UtcNow;
+                updatedAssignment = await _assignmentRepository.UpdateAsync(assignment, ct);
+
+                if (assignment.ShiftId.HasValue)
+                {
+                    await _queueService.RequeueDriverAsync(driverId, assignment.ShiftId.Value, ct);
+                }
+
+                await tx.CommitAsync(ct);
             }
 
-            assignment.Status = OrderAssignmentStatus.Rejected;
-            assignment.RespondedAt = DateTime.UtcNow;
-
-            var updatedAssignment = await _assignmentRepository.UpdateAsync(assignment, ct);
-
-            // Requeue driver to end of queue
-            if (assignment.ShiftId.HasValue)
-            {
-                await _queueService.RequeueDriverAsync(driverId, assignment.ShiftId.Value, ct);
-            }
-
-            // Try to dispatch to next driver
-            _ = Task.Run(async () =>
-            {
-                await DispatchOrderAsync(assignment.OrderId, CancellationToken.None);
-            }, ct);
+            // Re-dispatch after the rejection is committed so the next assignment is written in its own transaction.
+            await DispatchOrderAsync(assignment.OrderId, ct);
 
             _logger.LogInformation(
                 "Driver {DriverId} rejected order {OrderId}, requeued and redispatching",
@@ -235,19 +240,24 @@ namespace DeliveryDash.Application.Services
             var assignment = await _assignmentRepository.GetAcceptedAssignmentAsync(orderId, driverId, ct)
                 ?? throw new InvalidOperationException("No accepted assignment found for this order");
 
-            // Update order status
             var order = await _orderRepository.GetByIdAsync(orderId)
                 ?? throw new InvalidOperationException("Order not found");
 
+            var now = DateTime.UtcNow;
+
+            await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
+
             order.Status = OrderStatus.Delivered;
-            order.CompletedAt = DateTime.UtcNow;
+            order.DeliveredAt = now;
+            order.CompletedAt = now;
             await _orderRepository.UpdateAsync(order);
 
-            // Re-add driver to queue if still on shift
             if (await _shiftService.IsDriverOnShiftAsync(driverId, ct) && assignment.ShiftId.HasValue)
             {
                 await _queueService.EnqueueDriverAsync(driverId, assignment.ShiftId.Value, ct);
             }
+
+            await tx.CommitAsync(ct);
 
             _logger.LogInformation(
                 "Driver {DriverId} completed delivery for order {OrderId}",
@@ -262,19 +272,23 @@ namespace DeliveryDash.Application.Services
             {
                 try
                 {
-                    assignment.Status = OrderAssignmentStatus.Expired;
-                    assignment.RespondedAt = DateTime.UtcNow;
-                    await _assignmentRepository.UpdateAsync(assignment, ct);
-
-                    // Requeue driver
-                    if (assignment.ShiftId.HasValue &&
-                        await _shiftService.IsDriverOnShiftAsync(assignment.DriverId, ct))
+                    await using (var tx = await _unitOfWork.BeginTransactionAsync(ct))
                     {
-                        await _queueService.RequeueDriverAsync(
-                            assignment.DriverId, assignment.ShiftId.Value, ct);
+                        assignment.Status = OrderAssignmentStatus.Expired;
+                        assignment.RespondedAt = DateTime.UtcNow;
+                        await _assignmentRepository.UpdateAsync(assignment, ct);
+
+                        if (assignment.ShiftId.HasValue &&
+                            await _shiftService.IsDriverOnShiftAsync(assignment.DriverId, ct))
+                        {
+                            await _queueService.RequeueDriverAsync(
+                                assignment.DriverId, assignment.ShiftId.Value, ct);
+                        }
+
+                        await tx.CommitAsync(ct);
                     }
 
-                    // Redispatch order (will check max attempts internally)
+                    // Redispatch runs outside the expire-commit so the next assignment gets its own transaction.
                     await DispatchOrderAsync(assignment.OrderId, ct);
 
                     _logger.LogInformation(

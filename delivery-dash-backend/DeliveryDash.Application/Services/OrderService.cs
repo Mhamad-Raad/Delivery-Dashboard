@@ -1,4 +1,5 @@
 using FluentValidation;
+using DeliveryDash.Application.Abstracts;
 using DeliveryDash.Application.Abstracts.IRepository;
 using DeliveryDash.Application.Abstracts.IService;
 using DeliveryDash.Application.Extensions;
@@ -23,6 +24,7 @@ namespace DeliveryDash.Application.Services
         private readonly IOrderAssignmentRepository _orderAssignmentRepository;
         private readonly IValidator<CreateOrderRequest> _createValidator;
         private readonly IValidator<UpdateOrderStatusRequest> _updateStatusValidator;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<OrderService> _logger;
 
         public OrderService(
@@ -35,6 +37,7 @@ namespace DeliveryDash.Application.Services
             IOrderAssignmentRepository orderAssignmentRepository,
             IValidator<CreateOrderRequest> createValidator,
             IValidator<UpdateOrderStatusRequest> updateStatusValidator,
+            IUnitOfWork unitOfWork,
             ILogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
@@ -46,6 +49,7 @@ namespace DeliveryDash.Application.Services
             _orderAssignmentRepository = orderAssignmentRepository;
             _createValidator = createValidator;
             _updateStatusValidator = updateStatusValidator;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -231,7 +235,6 @@ namespace DeliveryDash.Application.Services
             if (order == null)
                 throw new OrderNotFoundException(id);
 
-            // Only vendors and admins can update status
             if (userRole == Role.Customer)
                 throw new UnauthorizedOrderAccessException();
 
@@ -241,24 +244,18 @@ namespace DeliveryDash.Application.Services
                     throw new UnauthorizedOrderAccessException();
             }
 
-            // Validate status transition
-            ValidateStatusTransition(order.Status, request.Status);
+            ValidateStatusTransition(order.Status, request.Status, userRole);
 
             var previousStatus = order.Status;
-            order.Status = request.Status;
+            var now = DateTime.UtcNow;
 
-            if (request.Status == OrderStatus.Delivered || request.Status == OrderStatus.Cancelled)
-            {
-                order.CompletedAt = DateTime.UtcNow;
-            }
+            await using var tx = await _unitOfWork.BeginTransactionAsync();
+
+            order.Status = request.Status;
+            ApplyStatusTimestamp(order, request.Status, now);
 
             var updatedOrder = await _orderRepository.UpdateAsync(order);
 
-            _logger.LogInformation(
-                "Order {OrderId} status updated from {PreviousStatus} to {NewStatus}",
-                order.Id, previousStatus, request.Status);
-
-            // Notify customer when order is confirmed
             if (previousStatus == OrderStatus.Pending && request.Status == OrderStatus.Confirmed)
             {
                 await _notificationService.SendNotificationAsync(
@@ -270,30 +267,22 @@ namespace DeliveryDash.Application.Services
                     $"{{\"orderId\":{order.Id},\"orderNumber\":\"{order.OrderNumber}\",\"status\":\"Confirmed\"}}");
             }
 
-            // Dispatch to driver when order is ready for delivery
+            OrderAssignmentResponse? dispatchAssignment = null;
             if (request.Status == OrderStatus.Preparing)
             {
                 _logger.LogInformation("Dispatching order {OrderId} to driver", order.Id);
-                
-                try
-                {
-                    var assignment = await _orderDispatchService.DispatchOrderAsync(order.Id);
-                    
-                    if (assignment != null)
-                    {
-                        _logger.LogInformation(
-                            "Order {OrderId} dispatched successfully. Assignment: {AssignmentId}, Driver: {DriverId}",
-                            order.Id, assignment.Id, assignment.DriverId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Order {OrderId} dispatch returned null - no drivers available", order.Id);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to dispatch order {OrderId} to driver", order.Id);
-                }
+                dispatchAssignment = await _orderDispatchService.DispatchOrderAsync(order.Id);
+            }
+
+            await tx.CommitAsync();
+
+            _logger.LogInformation(
+                "Order {OrderId} status updated from {PreviousStatus} to {NewStatus} by role {Role}",
+                order.Id, previousStatus, request.Status, userRole);
+
+            if (request.Status == OrderStatus.Preparing && dispatchAssignment == null)
+            {
+                _logger.LogWarning("Order {OrderId} is Preparing but no driver could be dispatched yet", order.Id);
             }
 
             return MapToDetailResponse(updatedOrder);
@@ -305,33 +294,69 @@ namespace DeliveryDash.Application.Services
             if (order == null)
                 throw new OrderNotFoundException(id);
 
-            // Users can only cancel their own orders
             if (userRole == Role.Customer && order.UserId != userId)
                 throw new UnauthorizedOrderAccessException();
 
-            // Can only cancel pending or confirmed orders
-            if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed)
+            // Strict: customer/vendor can only cancel Pending or Confirmed.
+            // Admin/SuperAdmin can cancel any non-terminal state.
+            var isAdmin = userRole == Role.Admin || userRole == Role.SuperAdmin;
+            var isTerminal = order.Status == OrderStatus.Delivered || order.Status == OrderStatus.Cancelled;
+
+            if (isTerminal)
                 throw new InvalidOrderStatusTransitionException(order.Status, OrderStatus.Cancelled);
 
+            if (!isAdmin && order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed)
+                throw new InvalidOrderStatusTransitionException(order.Status, OrderStatus.Cancelled);
+
+            var now = DateTime.UtcNow;
+
+            await using var tx = await _unitOfWork.BeginTransactionAsync();
+
             order.Status = OrderStatus.Cancelled;
-            order.CompletedAt = DateTime.UtcNow;
+            order.CancelledAt = now;
+            order.CompletedAt = now;
 
             var updatedOrder = await _orderRepository.UpdateAsync(order);
 
-            // Notify vendor about order cancellation
             var vendor = await _vendorRepository.GetByIdAsync(order.VendorId);
             if (vendor != null)
             {
                 await _notificationService.SendNotificationAsync(
                     vendor.UserId,
                     "Order Cancelled",
-                    $"Order #{order.OrderNumber} worth {order.TotalAmount:C} has been cancelled by the customer.",
+                    $"Order #{order.OrderNumber} worth {order.TotalAmount:C} has been cancelled.",
                     "Order",
                     $"/orders/{order.Id}",
                     $"{{\"orderId\":{order.Id},\"orderNumber\":\"{order.OrderNumber}\",\"totalAmount\":{order.TotalAmount},\"status\":\"Cancelled\"}}");
             }
 
+            await tx.CommitAsync();
+
             return MapToDetailResponse(updatedOrder);
+        }
+
+        private static void ApplyStatusTimestamp(Order order, OrderStatus newStatus, DateTime now)
+        {
+            switch (newStatus)
+            {
+                case OrderStatus.Confirmed:
+                    order.ConfirmedAt = now;
+                    break;
+                case OrderStatus.Preparing:
+                    order.PreparingAt = now;
+                    break;
+                case OrderStatus.OutForDelivery:
+                    order.OutForDeliveryAt = now;
+                    break;
+                case OrderStatus.Delivered:
+                    order.DeliveredAt = now;
+                    order.CompletedAt = now;
+                    break;
+                case OrderStatus.Cancelled:
+                    order.CancelledAt = now;
+                    order.CompletedAt = now;
+                    break;
+            }
         }
 
         private async Task<string> GenerateOrderNumberAsync()
@@ -368,21 +393,30 @@ namespace DeliveryDash.Application.Services
             }
         }
 
-        private void ValidateStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
+        private void ValidateStatusTransition(OrderStatus currentStatus, OrderStatus newStatus, Role userRole)
         {
-            // Define allowed transitions
+            var isAdmin = userRole == Role.Admin || userRole == Role.SuperAdmin;
+
+            // Domain-allowed transitions (shape of the state machine).
             var allowedTransitions = new Dictionary<OrderStatus, List<OrderStatus>>
             {
                 { OrderStatus.Pending, new List<OrderStatus> { OrderStatus.Confirmed, OrderStatus.Cancelled } },
                 { OrderStatus.Confirmed, new List<OrderStatus> { OrderStatus.Preparing, OrderStatus.Cancelled } },
                 { OrderStatus.Preparing, new List<OrderStatus> { OrderStatus.OutForDelivery, OrderStatus.Cancelled } },
-                { OrderStatus.OutForDelivery, new List<OrderStatus> { OrderStatus.Delivered } },
+                { OrderStatus.OutForDelivery, new List<OrderStatus> { OrderStatus.Delivered, OrderStatus.Cancelled } },
                 { OrderStatus.Delivered, new List<OrderStatus>() },
                 { OrderStatus.Cancelled, new List<OrderStatus>() }
             };
 
             if (!allowedTransitions[currentStatus].Contains(newStatus))
                 throw new InvalidOrderStatusTransitionException(currentStatus, newStatus);
+
+            // Strict policy: non-admins cannot cancel once the order is Preparing or later.
+            if (newStatus == OrderStatus.Cancelled && !isAdmin &&
+                currentStatus != OrderStatus.Pending && currentStatus != OrderStatus.Confirmed)
+            {
+                throw new InvalidOrderStatusTransitionException(currentStatus, newStatus);
+            }
         }
 
         private OrderResponse MapToResponse(Order order)

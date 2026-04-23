@@ -12,6 +12,12 @@ namespace DeliveryDash.Infrastructure.Configurations
 
             builder.HasKey(a => a.Id);
 
+            builder.Property<uint>("xmin")
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
+
             builder.Property(a => a.OfferedAt)
                 .IsRequired();
 
@@ -33,6 +39,11 @@ namespace DeliveryDash.Infrastructure.Configurations
             builder.HasIndex(a => new { a.Status, a.ExpiresAt })
                 .HasDatabaseName("IX_OrderAssignments_Status_ExpiresAt")
                 .HasFilter("\"Status\" = 0"); // Pending status
+
+            builder.HasIndex(a => a.OrderId)
+                .IsUnique()
+                .HasFilter("\"Status\" = 1") // Accepted — enforce one accepted assignment per order
+                .HasDatabaseName("UX_OrderAssignments_OrderId_Accepted");
 
             builder.HasOne(a => a.Order)
                 .WithMany()

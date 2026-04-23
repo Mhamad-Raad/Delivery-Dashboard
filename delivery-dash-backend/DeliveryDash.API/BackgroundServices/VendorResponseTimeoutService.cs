@@ -1,3 +1,4 @@
+using DeliveryDash.Application.Abstracts;
 using DeliveryDash.Application.Abstracts.IRepository;
 using DeliveryDash.Application.Abstracts.IService;
 using DeliveryDash.Domain.Enums;
@@ -41,9 +42,10 @@ namespace DeliveryDash.API.BackgroundServices
         private async Task ProcessTimedOutOrdersAsync(CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            
+
             var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
             var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var cutoffTime = DateTime.UtcNow - _vendorTimeout;
 
@@ -66,13 +68,16 @@ namespace DeliveryDash.API.BackgroundServices
 
                 try
                 {
-                    // Cancel the order
+                    var now = DateTime.UtcNow;
+
+                    await using var tx = await unitOfWork.BeginTransactionAsync(stoppingToken);
+
                     order.Status = OrderStatus.Cancelled;
-                    order.CompletedAt = DateTime.UtcNow;
+                    order.CancelledAt = now;
+                    order.CompletedAt = now;
 
                     await orderRepository.UpdateAsync(order);
 
-                    // Notify the customer
                     await notificationService.SendNotificationAsync(
                         order.UserId,
                         "Order Cancelled",
@@ -80,6 +85,8 @@ namespace DeliveryDash.API.BackgroundServices
                         "Order",
                         $"/orders/{order.Id}",
                         $"{{\"orderId\":{order.Id},\"orderNumber\":\"{order.OrderNumber}\",\"reason\":\"VendorNoResponse\"}}");
+
+                    await tx.CommitAsync(stoppingToken);
 
                     _logger.LogInformation(
                         "Order {OrderId} cancelled due to vendor timeout. Customer {UserId} notified.",

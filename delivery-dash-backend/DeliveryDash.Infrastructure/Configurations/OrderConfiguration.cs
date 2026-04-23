@@ -10,6 +10,12 @@ namespace DeliveryDash.Infrastructure.Configurations
         {
             builder.HasKey(o => o.Id);
 
+            builder.Property<uint>("xmin")
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
+
             builder.Property(o => o.OrderNumber)
                 .IsRequired()
                 .HasMaxLength(50);
@@ -64,6 +70,9 @@ namespace DeliveryDash.Infrastructure.Configurations
 
             builder.HasIndex(o => o.CreatedAt)
                 .HasDatabaseName("IX_Orders_CreatedAt");
+
+            builder.HasIndex(o => o.DeliveredAt)
+                .HasDatabaseName("IX_Orders_DeliveredAt");
         }
     }
 }

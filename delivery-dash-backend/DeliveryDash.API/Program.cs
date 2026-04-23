@@ -166,6 +166,7 @@ builder.Services.AddScoped<IVendorCategoryRepository, VendorCategoryRepository>(
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<DeliveryDash.Application.Abstracts.IUnitOfWork, DeliveryDash.Infrastructure.UnitOfWork.EfUnitOfWork>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IVendorStaffRepository, VendorStaffRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
