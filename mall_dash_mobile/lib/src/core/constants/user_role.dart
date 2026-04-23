@@ -1,29 +1,23 @@
-/// User role constants matching backend API
-/// These values are returned from the backend as integers in the role field
+/// User role constants matching backend API.
+///
+/// Backend `Role` enum values:
+///   SuperAdmin = 0, Admin = 1, Vendor = 2, Customer = 3, Driver = 4, VendorStaff = 5.
+/// The mobile app only serves Customer and Driver; other roles are web-only.
 class UserRole {
-  // Role values from backend
-  static const String tenant = '3';  // Tenant/Customer role
-  static const String driver = '4';  // Driver role
-  
-  // Role names for display
-  static const String tenantName = 'Tenant';
+  static const String customer = '3';
+  static const String driver = '4';
+
+  static const String customerName = 'Customer';
   static const String driverName = 'Driver';
-  
-  /// Check if role is tenant
-  static bool isTenant(String? role) {
-    return role == tenant;
-  }
-  
-  /// Check if role is driver
-  static bool isDriver(String? role) {
-    return role == driver;
-  }
-  
-  /// Get display name for role
+
+  static bool isCustomer(String? role) => role == customer;
+
+  static bool isDriver(String? role) => role == driver;
+
   static String getDisplayName(String? role) {
     switch (role) {
-      case tenant:
-        return tenantName;
+      case customer:
+        return customerName;
       case driver:
         return driverName;
       default:

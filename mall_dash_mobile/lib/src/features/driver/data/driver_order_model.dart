@@ -1,15 +1,26 @@
-/// Driver order data models matching backend API structure
+/// Driver order data models matching backend API structure.
+///
+/// Backend `OrderStatus`: Pending=1, Confirmed=2, Preparing=3, OutForDelivery=4, Delivered=5, Cancelled=6.
 class DriverOrder {
   final int id;
   final String orderNumber;
-  final String? customerId; // Changed to String to support UUID
+  final String? customerId;
   final String? customerName;
   final String? customerPhone;
   final String? customerEmail;
-  final String? deliveryAddress;
+
+  // Delivery-address fields (new flat address shape from backend).
+  final String? deliveryAddress; // pre-formatted human-readable string for list views
+  final double? latitude;
+  final double? longitude;
+  final String? street;
+  final String? addressPhoneNumber;
   final String? buildingName;
   final String? floorNumber;
   final String? apartmentNumber;
+  final String? additionalDirections;
+  final String? addressLabel;
+
   final int? vendorId;
   final String? vendorName;
   final int status;
@@ -19,8 +30,12 @@ class DriverOrder {
   final double? totalAmount;
   final String? notes;
   final DateTime? createdAt;
+  final DateTime? confirmedAt;
+  final DateTime? preparingAt;
+  final DateTime? outForDeliveryAt;
+  final DateTime? deliveredAt;
+  final DateTime? cancelledAt;
   final DateTime? completedAt;
-  final DateTime? deliveryTime;
   final List<OrderItem>? items;
   final int? assignmentId;
   final bool? isAssigned;
@@ -33,9 +48,15 @@ class DriverOrder {
     this.customerPhone,
     this.customerEmail,
     this.deliveryAddress,
+    this.latitude,
+    this.longitude,
+    this.street,
+    this.addressPhoneNumber,
     this.buildingName,
     this.floorNumber,
     this.apartmentNumber,
+    this.additionalDirections,
+    this.addressLabel,
     this.vendorId,
     this.vendorName,
     required this.status,
@@ -45,20 +66,18 @@ class DriverOrder {
     this.totalAmount,
     this.notes,
     this.createdAt,
+    this.confirmedAt,
+    this.preparingAt,
+    this.outForDeliveryAt,
+    this.deliveredAt,
+    this.cancelledAt,
     this.completedAt,
-    this.deliveryTime,
     this.items,
     this.assignmentId,
     this.isAssigned,
   });
 
   factory DriverOrder.fromJson(Map<String, dynamic> json) {
-    print('========================================');
-    print('📋 PARSING ORDER JSON');
-    print('   Raw JSON keys: ${json.keys.toList()}');
-    print('========================================');
-
-    // Helper function to safely parse int from dynamic value
     int? parseIntOrNull(dynamic value) {
       if (value == null) return null;
       if (value is int) return value;
@@ -66,7 +85,6 @@ class DriverOrder {
       return null;
     }
 
-    // Helper function to safely parse int with default
     int parseIntOrDefault(dynamic value, int defaultValue) {
       if (value == null) return defaultValue;
       if (value is int) return value;
@@ -74,7 +92,6 @@ class DriverOrder {
       return defaultValue;
     }
 
-    // Helper function to safely parse double
     double? parseDoubleOrNull(dynamic value) {
       if (value == null) return null;
       if (value is double) return value;
@@ -83,38 +100,48 @@ class DriverOrder {
       return null;
     }
 
-    // Parse deliveryAddress - can be a nested object or a string
+    DateTime? parseDate(dynamic value) =>
+        value == null ? null : DateTime.tryParse(value.toString());
+
+    // Parse deliveryAddress — backend now sends a flat object with lat/lng + type-specific fields.
+    // Falls back to the old Building/Floor/Apartment shape or a plain string for tolerance.
     String? deliveryAddressStr;
+    double? latitude;
+    double? longitude;
+    String? street;
+    String? addressPhone;
     String? buildingName;
     String? floorNumber;
     String? apartmentNumber;
+    String? additionalDirections;
+    String? addressLabel;
 
     final deliveryAddressData = json['deliveryAddress'];
     if (deliveryAddressData is Map<String, dynamic>) {
-      // Nested object format: {"buildingName": "...", "floorNumber": 7, "apartmentName": "..."}
+      latitude = parseDoubleOrNull(deliveryAddressData['latitude']);
+      longitude = parseDoubleOrNull(deliveryAddressData['longitude']);
+      street = deliveryAddressData['street']?.toString();
+      addressPhone = deliveryAddressData['phoneNumber']?.toString();
       buildingName = deliveryAddressData['buildingName']?.toString();
-      floorNumber = deliveryAddressData['floorNumber']?.toString();
-      apartmentNumber = deliveryAddressData['apartmentName']?.toString() ??
-                        deliveryAddressData['apartmentNumber']?.toString();
+      floorNumber = (deliveryAddressData['floor'] ?? deliveryAddressData['floorNumber'])?.toString();
+      apartmentNumber = (deliveryAddressData['apartmentNumber'] ?? deliveryAddressData['apartmentName'])?.toString();
+      additionalDirections = deliveryAddressData['additionalDirections']?.toString();
+      addressLabel = deliveryAddressData['label']?.toString();
 
-      // Build a readable address string
+      // Build a readable one-liner for list views.
       final parts = <String>[];
-      if (apartmentNumber != null) parts.add(apartmentNumber!);
+      if (apartmentNumber != null) parts.add('Apt $apartmentNumber');
       if (floorNumber != null) parts.add('Floor $floorNumber');
-      if (buildingName != null) parts.add(buildingName!);
+      if (buildingName != null) parts.add(buildingName);
+      if (street != null) parts.add(street);
       deliveryAddressStr = parts.isNotEmpty ? parts.join(', ') : null;
-
-      print('   📍 Parsed nested deliveryAddress:');
-      print('      Building: $buildingName');
-      print('      Floor: $floorNumber');
-      print('      Apartment: $apartmentNumber');
     } else if (deliveryAddressData is String) {
       deliveryAddressStr = deliveryAddressData;
     } else {
-      // Fallback to flat fields
+      // Fallback to flat fields at the root (legacy shape).
       buildingName = json['buildingName']?.toString();
-      floorNumber = json['floorNumber']?.toString();
-      apartmentNumber = json['apartmentNumber']?.toString() ?? json['apartmentName']?.toString();
+      floorNumber = (json['floor'] ?? json['floorNumber'])?.toString();
+      apartmentNumber = (json['apartmentNumber'] ?? json['apartmentName'])?.toString();
       deliveryAddressStr = json['address']?.toString();
     }
 
@@ -125,12 +152,20 @@ class DriverOrder {
       orderNumber: json['orderNumber']?.toString() ?? '',
       customerId: (json['userId'] ?? json['customerId'])?.toString(),
       customerName: json['userName']?.toString() ?? json['customerName']?.toString(),
-      customerPhone: json['userPhone']?.toString() ?? json['customerPhone']?.toString() ?? json['phoneNumber']?.toString(),
+      customerPhone: json['userPhone']?.toString() ??
+          json['customerPhone']?.toString() ??
+          json['phoneNumber']?.toString(),
       customerEmail: json['userEmail']?.toString() ?? json['customerEmail']?.toString(),
       deliveryAddress: deliveryAddressStr,
+      latitude: latitude,
+      longitude: longitude,
+      street: street,
+      addressPhoneNumber: addressPhone,
       buildingName: buildingName,
       floorNumber: floorNumber,
       apartmentNumber: apartmentNumber,
+      additionalDirections: additionalDirections,
+      addressLabel: addressLabel,
       vendorId: parseIntOrNull(json['vendorId']),
       vendorName: json['vendorName']?.toString(),
       status: status,
@@ -139,19 +174,15 @@ class DriverOrder {
       deliveryFee: parseDoubleOrNull(json['deliveryFee']),
       totalAmount: parseDoubleOrNull(json['totalAmount'] ?? json['total']),
       notes: json['notes']?.toString(),
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString())
-          : null,
-      completedAt: json['completedAt'] != null
-          ? DateTime.tryParse(json['completedAt'].toString())
-          : null,
-      deliveryTime: json['deliveryTime'] != null
-          ? DateTime.tryParse(json['deliveryTime'].toString())
-          : null,
+      createdAt: parseDate(json['createdAt']),
+      confirmedAt: parseDate(json['confirmedAt']),
+      preparingAt: parseDate(json['preparingAt']),
+      outForDeliveryAt: parseDate(json['outForDeliveryAt']),
+      deliveredAt: parseDate(json['deliveredAt']),
+      cancelledAt: parseDate(json['cancelledAt']),
+      completedAt: parseDate(json['completedAt']),
       items: json['items'] != null
-          ? (json['items'] as List)
-                .map((item) => OrderItem.fromJson(item))
-                .toList()
+          ? (json['items'] as List).map((item) => OrderItem.fromJson(item)).toList()
           : null,
       assignmentId: parseIntOrNull(json['assignmentId']),
       isAssigned: json['isAssigned'] ?? json['assigned'],
@@ -167,16 +198,10 @@ class DriverOrder {
       case 3:
         return 'Preparing';
       case 4:
-        return 'Ready for Pickup';
+        return 'Out for Delivery';
       case 5:
-        return 'Assigned to Driver';
-      case 6:
-        return 'Picked Up';
-      case 7:
-        return 'In Transit';
-      case 8:
         return 'Delivered';
-      case 9:
+      case 6:
         return 'Cancelled';
       default:
         return 'Unknown';
@@ -192,9 +217,15 @@ class DriverOrder {
       'userPhone': customerPhone,
       'userEmail': customerEmail,
       'deliveryAddress': deliveryAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      'street': street,
+      'addressPhoneNumber': addressPhoneNumber,
       'buildingName': buildingName,
       'floorNumber': floorNumber,
       'apartmentNumber': apartmentNumber,
+      'additionalDirections': additionalDirections,
+      'addressLabel': addressLabel,
       'vendorId': vendorId,
       'vendorName': vendorName,
       'status': status,
@@ -204,15 +235,18 @@ class DriverOrder {
       'totalAmount': totalAmount,
       'notes': notes,
       'createdAt': createdAt?.toIso8601String(),
+      'confirmedAt': confirmedAt?.toIso8601String(),
+      'preparingAt': preparingAt?.toIso8601String(),
+      'outForDeliveryAt': outForDeliveryAt?.toIso8601String(),
+      'deliveredAt': deliveredAt?.toIso8601String(),
+      'cancelledAt': cancelledAt?.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
-      'deliveryTime': deliveryTime?.toIso8601String(),
       'items': items?.map((item) => item.toJson()).toList(),
       'assignmentId': assignmentId,
       'isAssigned': isAssigned,
     };
   }
 
-  /// Create a copy of this order with updated fields
   DriverOrder copyWith({
     int? id,
     String? orderNumber,
@@ -221,9 +255,15 @@ class DriverOrder {
     String? customerPhone,
     String? customerEmail,
     String? deliveryAddress,
+    double? latitude,
+    double? longitude,
+    String? street,
+    String? addressPhoneNumber,
     String? buildingName,
     String? floorNumber,
     String? apartmentNumber,
+    String? additionalDirections,
+    String? addressLabel,
     int? vendorId,
     String? vendorName,
     int? status,
@@ -233,8 +273,12 @@ class DriverOrder {
     double? totalAmount,
     String? notes,
     DateTime? createdAt,
+    DateTime? confirmedAt,
+    DateTime? preparingAt,
+    DateTime? outForDeliveryAt,
+    DateTime? deliveredAt,
+    DateTime? cancelledAt,
     DateTime? completedAt,
-    DateTime? deliveryTime,
     List<OrderItem>? items,
     int? assignmentId,
     bool? isAssigned,
@@ -247,9 +291,15 @@ class DriverOrder {
       customerPhone: customerPhone ?? this.customerPhone,
       customerEmail: customerEmail ?? this.customerEmail,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      street: street ?? this.street,
+      addressPhoneNumber: addressPhoneNumber ?? this.addressPhoneNumber,
       buildingName: buildingName ?? this.buildingName,
       floorNumber: floorNumber ?? this.floorNumber,
       apartmentNumber: apartmentNumber ?? this.apartmentNumber,
+      additionalDirections: additionalDirections ?? this.additionalDirections,
+      addressLabel: addressLabel ?? this.addressLabel,
       vendorId: vendorId ?? this.vendorId,
       vendorName: vendorName ?? this.vendorName,
       status: status ?? this.status,
@@ -259,8 +309,12 @@ class DriverOrder {
       totalAmount: totalAmount ?? this.totalAmount,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      confirmedAt: confirmedAt ?? this.confirmedAt,
+      preparingAt: preparingAt ?? this.preparingAt,
+      outForDeliveryAt: outForDeliveryAt ?? this.outForDeliveryAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      cancelledAt: cancelledAt ?? this.cancelledAt,
       completedAt: completedAt ?? this.completedAt,
-      deliveryTime: deliveryTime ?? this.deliveryTime,
       items: items ?? this.items,
       assignmentId: assignmentId ?? this.assignmentId,
       isAssigned: isAssigned ?? this.isAssigned,
@@ -268,7 +322,6 @@ class DriverOrder {
   }
 }
 
-/// Order item model
 class OrderItem {
   final int id;
   final String productName;
@@ -305,39 +358,30 @@ class OrderItem {
   }
 }
 
-/// Order assignment request model
 class OrderAssignmentRequest {
   final int assignmentId;
 
   OrderAssignmentRequest({required this.assignmentId});
 
-  Map<String, dynamic> toJson() {
-    return {'assignmentId': assignmentId};
-  }
+  Map<String, dynamic> toJson() => {'assignmentId': assignmentId};
 }
 
-/// Update order status request model
 class UpdateOrderStatusRequest {
   final int status;
 
   UpdateOrderStatusRequest({required this.status});
 
-  Map<String, dynamic> toJson() {
-    return {'status': status};
-  }
+  Map<String, dynamic> toJson() => {'status': status};
 }
 
-/// Delivery status enum matching backend values
+/// Order status enum matching backend OrderStatus values.
 enum DeliveryStatus {
   pending(1),
   confirmed(2),
   preparing(3),
-  readyForPickup(4),
-  assignedToDriver(5),
-  pickedUp(6),
-  inTransit(7),
-  delivered(8),
-  cancelled(9);
+  outForDelivery(4),
+  delivered(5),
+  cancelled(6);
 
   final int value;
   const DeliveryStatus(this.value);
@@ -357,14 +401,8 @@ enum DeliveryStatus {
         return 'Confirmed';
       case DeliveryStatus.preparing:
         return 'Preparing';
-      case DeliveryStatus.readyForPickup:
-        return 'Ready for Pickup';
-      case DeliveryStatus.assignedToDriver:
-        return 'Assigned to Driver';
-      case DeliveryStatus.pickedUp:
-        return 'Picked Up';
-      case DeliveryStatus.inTransit:
-        return 'In Transit';
+      case DeliveryStatus.outForDelivery:
+        return 'Out for Delivery';
       case DeliveryStatus.delivered:
         return 'Delivered';
       case DeliveryStatus.cancelled:

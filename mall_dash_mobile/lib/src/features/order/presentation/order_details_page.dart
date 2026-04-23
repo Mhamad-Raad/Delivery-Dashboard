@@ -66,7 +66,15 @@ class _OrderDetailsPageState extends ConsumerState<OrderDetailsPage> {
     }
   }
 
-  //  Cancel order 
+  bool _hasAnyTimestamp(Order order) {
+    return order.confirmedAt != null ||
+        order.preparingAt != null ||
+        order.outForDeliveryAt != null ||
+        order.deliveredAt != null ||
+        order.cancelledAt != null;
+  }
+
+  //  Cancel order
   Future<void> _cancelOrder(Order order) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -252,11 +260,29 @@ class _OrderDetailsPageState extends ConsumerState<OrderDetailsPage> {
 
           const SizedBox(height: 20),
 
-          //  Pricing summary 
+          //  Pricing summary
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _PricingSummary(order: order, isDark: isDark),
           ).animate(delay: 550.ms).fadeIn(duration: 500.ms).slideY(begin: 0.04),
+
+          //  Activity (per-status timestamps)
+          if (_hasAnyTimestamp(order)) ...[
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _SectionHeader(
+                title: 'Activity',
+                icon: Icons.timeline_rounded,
+                isDark: isDark,
+              ),
+            ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _ActivityFeed(order: order, isDark: isDark),
+            ).animate(delay: 650.ms).fadeIn(duration: 400.ms).slideY(begin: 0.04),
+          ],
 
           //  Cancel button 
           if (canCancel) ...[
@@ -821,9 +847,164 @@ class _NotesCard extends StatelessWidget {
   }
 }
 
-// 
+//
+// ACTIVITY FEED — per-status timestamps from backend Path 2
+//
+class _ActivityFeed extends StatelessWidget {
+  final Order order;
+  final bool isDark;
+
+  const _ActivityFeed({required this.order, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <_ActivityEntry>[
+      _ActivityEntry(
+        label: 'Order placed',
+        timestamp: order.createdAt,
+        icon: Icons.receipt_long_rounded,
+        color: const Color(0xFFF59E0B),
+      ),
+      if (order.confirmedAt != null)
+        _ActivityEntry(
+          label: 'Confirmed by vendor',
+          timestamp: order.confirmedAt!,
+          icon: Icons.check_circle_outline_rounded,
+          color: const Color(0xFF3B82F6),
+        ),
+      if (order.preparingAt != null)
+        _ActivityEntry(
+          label: 'Being prepared',
+          timestamp: order.preparingAt!,
+          icon: Icons.restaurant_rounded,
+          color: const Color(0xFF8B5CF6),
+        ),
+      if (order.outForDeliveryAt != null)
+        _ActivityEntry(
+          label: 'Out for delivery',
+          timestamp: order.outForDeliveryAt!,
+          icon: Icons.delivery_dining_rounded,
+          color: const Color(0xFF6366F1),
+        ),
+      if (order.deliveredAt != null)
+        _ActivityEntry(
+          label: 'Delivered',
+          timestamp: order.deliveredAt!,
+          icon: Icons.verified_rounded,
+          color: const Color(0xFF10B981),
+        ),
+      if (order.cancelledAt != null)
+        _ActivityEntry(
+          label: 'Cancelled',
+          timestamp: order.cancelledAt!,
+          icon: Icons.cancel_rounded,
+          color: const Color(0xFFF43F5E),
+        ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardBackgroundDark : Colors.white,
+        borderRadius: AppRadius.radiusLg,
+        boxShadow: isDark ? AppShadows.cardShadowDark : AppShadows.cardShadow,
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withAlpha(6),
+        ),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < entries.length; i++)
+            _buildRow(entries[i], isLast: i == entries.length - 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(_ActivityEntry entry, {required bool isLast}) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: entry.color.withAlpha(25),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(entry.icon, size: 17, color: entry.color),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: (isDark ? Colors.white : Colors.black).withAlpha(20),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 14, top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatTimestamp(entry.timestamp),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimestamp(DateTime dt) {
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year;
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year · $hour:$minute';
+  }
+}
+
+class _ActivityEntry {
+  final String label;
+  final DateTime timestamp;
+  final IconData icon;
+  final Color color;
+  const _ActivityEntry({
+    required this.label,
+    required this.timestamp,
+    required this.icon,
+    required this.color,
+  });
+}
+
+//
 // PRICING SUMMARY
-// 
+//
 class _PricingSummary extends StatelessWidget {
   final Order order;
   final bool isDark;

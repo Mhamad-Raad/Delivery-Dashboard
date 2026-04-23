@@ -5,6 +5,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/design/design_system.dart';
 import '../../../core/theme/custom_theme_extension.dart';
+import '../../address/presentation/address_form_page.dart';
+import '../../address/presentation/address_notifier.dart';
+import '../../address/presentation/address_selector_sheet.dart';
+import '../../address/data/address_model.dart';
 import 'cart_notifier.dart';
 import '../data/order_model.dart';
 import '../data/order_repository.dart';
@@ -43,6 +47,12 @@ class _CartPageState extends ConsumerState<CartPage> {
       return;
     }
 
+    final selectedAddress = ref.read(selectedAddressProvider);
+    if (selectedAddress == null) {
+      _showSnackBar('Pick a delivery address first', isError: true);
+      return;
+    }
+
     final deliveryFee = double.tryParse(_deliveryFeeController.text) ?? 0.0;
 
     setState(() => _isPlacingOrder = true);
@@ -50,7 +60,7 @@ class _CartPageState extends ConsumerState<CartPage> {
     try {
       final request = CreateOrderRequest(
         vendorId: cart.vendorId!,
-        addressId: null,
+        addressId: selectedAddress.id,
         deliveryFee: deliveryFee,
         notes: _notesController.text.isEmpty ? null : _notesController.text,
         items: cart.items.values.map((item) {
@@ -454,10 +464,196 @@ class _CartPageState extends ConsumerState<CartPage> {
           ).animate(delay: 350.ms).fadeIn(duration: 400.ms),
         ),
 
+        // Delivery address picker
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: _buildAddressPicker(isDark),
+          ),
+        ),
+
         // Bottom spacing for checkout footer
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
     );
+  }
+
+  Widget _buildAddressPicker(bool isDark) {
+    final addressesAsync = ref.watch(addressesProvider);
+    return addressesAsync.when(
+      loading: () => _addressShell(
+        isDark: isDark,
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading addresses...'),
+          ],
+        ),
+        onTap: null,
+      ),
+      error: (_, __) => _addressShell(
+        isDark: isDark,
+        onTap: () => ref.read(addressesProvider.notifier).refresh(),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: AppColors.error, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Failed to load addresses — tap to retry',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (addresses) {
+        if (addresses.isEmpty) {
+          return _addressShell(
+            isDark: isDark,
+            highlight: true,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AddressFormPage()),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    borderRadius: AppRadius.radiusMd,
+                  ),
+                  child: const Icon(Icons.add_location_alt_rounded,
+                      color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Add a delivery address',
+                          style: GoogleFonts.inter(
+                              fontSize: 14, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Required before you can place an order.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded),
+              ],
+            ),
+          );
+        }
+
+        final selected = ref.watch(selectedAddressProvider) ?? addresses.first;
+        return _addressShell(
+          isDark: isDark,
+          onTap: () => AddressSelectorSheet.show(context),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(25),
+                  borderRadius: AppRadius.radiusMd,
+                ),
+                child: Icon(_iconFor(selected.type),
+                    color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selected.label ?? selected.type.displayName,
+                      style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      selected.summary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text('Change',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _addressShell({
+    required bool isDark,
+    required Widget child,
+    required VoidCallback? onTap,
+    bool highlight = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.radiusLg,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardBackgroundDark : Colors.white,
+            borderRadius: AppRadius.radiusLg,
+            boxShadow: isDark ? AppShadows.cardShadowDark : AppShadows.cardShadow,
+            border: Border.all(
+              color: highlight
+                  ? AppColors.primary.withAlpha(120)
+                  : (isDark ? Colors.white : Colors.black).withAlpha(6),
+              width: highlight ? 1.4 : 1,
+            ),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  IconData _iconFor(AddressType type) {
+    switch (type) {
+      case AddressType.apartment:
+        return Icons.apartment_rounded;
+      case AddressType.house:
+        return Icons.home_rounded;
+      case AddressType.office:
+        return Icons.business_rounded;
+    }
   }
 
   //  Glassmorphic checkout footer 
@@ -546,57 +742,71 @@ class _CartPageState extends ConsumerState<CartPage> {
               ),
               const SizedBox(height: 16),
               // Checkout button
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _isPlacingOrder ? null : _placeOrder,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.primary.withAlpha(150),
-                    elevation: 0,
-                    shape: AppRadius.pillButtonShape,
+              Builder(builder: (_) {
+                final selectedAddress = ref.watch(selectedAddressProvider);
+                final disabled = _isPlacingOrder || selectedAddress == null;
+                final label = selectedAddress == null
+                    ? 'Add a delivery address'
+                    : _isPlacingOrder
+                        ? 'Placing Order...'
+                        : 'Place Order';
+                return SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: disabled ? null : _placeOrder,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.primary.withAlpha(150),
+                      elevation: 0,
+                      shape: AppRadius.pillButtonShape,
+                    ),
+                    child: _isPlacingOrder
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                selectedAddress == null
+                                    ? Icons.location_off_outlined
+                                    : Icons.shopping_bag_rounded,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
-                  child: _isPlacingOrder
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Placing Order...',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.shopping_bag_rounded, size: 20),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Place Order',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         ),

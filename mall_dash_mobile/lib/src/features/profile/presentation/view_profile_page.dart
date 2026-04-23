@@ -241,30 +241,8 @@ class ViewProfilePage extends ConsumerWidget {
                           label: 'Phone',
                           value: profile.phoneNumber.isNotEmpty ? profile.phoneNumber : 'Not set',
                           isDark: isDark,
-                          isLast: profile.buildingName == null && profile.apartmentNumber == null,
+                          isLast: true,
                         ),
-                        if (profile.buildingName != null) ...[
-                          _divider(isDark),
-                          _buildInfoRow(
-                            icon: Icons.apartment_rounded,
-                            iconColor: AppColors.warning,
-                            label: 'Building',
-                            value: profile.buildingName!,
-                            isDark: isDark,
-                            isLast: profile.apartmentNumber == null,
-                          ),
-                        ],
-                        if (profile.apartmentNumber != null) ...[
-                          _divider(isDark),
-                          _buildInfoRow(
-                            icon: Icons.home_outlined,
-                            iconColor: AppColors.accent,
-                            label: 'Apartment',
-                            value: profile.apartmentNumber!,
-                            isDark: isDark,
-                            isLast: true,
-                          ),
-                        ],
                       ],
                     ),
                   )

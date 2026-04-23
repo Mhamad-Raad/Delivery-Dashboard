@@ -16,7 +16,7 @@ final _authErrorStreamControllerProvider = Provider((ref) {
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'https://maldash-development-api.runasp.net/MalDashApi',
+      baseUrl: 'https://localhost:7175/DeliveryDashApi',
       contentType: 'application/json',
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
@@ -77,7 +77,7 @@ final dioProvider = Provider<Dio>((ref) {
               // Create a new Dio instance to avoid circular dependencies/interceptors
               final refreshDio = Dio(
                 BaseOptions(
-                  baseUrl: 'https://maldash-development-api.runasp.net/MalDashApi',
+                  baseUrl: 'https://localhost:7175/DeliveryDashApi',
                   contentType: 'application/json',
                 ),
               );

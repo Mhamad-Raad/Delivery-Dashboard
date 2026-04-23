@@ -283,22 +283,9 @@ class _PremiumDeliveryCard extends ConsumerWidget {
                       ),
                     ],
 
-                    // Action Button
+                    // Action Button — backend `OrderStatus.OutForDelivery = 4`
                     const SizedBox(height: 14),
-                    if (delivery.status == 6) ...[
-                      _buildGradientButton(
-                        icon: Icons.local_shipping_rounded,
-                        label: 'Mark In Transit',
-                        gradient: LinearGradient(
-                          colors: [appTheme.infoColor, appTheme.infoColor.withAlpha(200)],
-                        ),
-                        shadowColor: appTheme.infoColor,
-                        onTap: () => _updateStatus(
-                          context, ref, delivery.id,
-                          DeliveryStatus.inTransit, 'Mark In Transit',
-                        ),
-                      ),
-                    ] else if (delivery.status == 7) ...[
+                    if (delivery.status == 4) ...[
                       _buildGradientButton(
                         icon: Icons.check_circle_rounded,
                         label: 'Mark Delivered',

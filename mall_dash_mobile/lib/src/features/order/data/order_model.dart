@@ -13,6 +13,11 @@ class Order {
   final int status;
   final String statusName;
   final DateTime createdAt;
+  final DateTime? confirmedAt;
+  final DateTime? preparingAt;
+  final DateTime? outForDeliveryAt;
+  final DateTime? deliveredAt;
+  final DateTime? cancelledAt;
   final DateTime? completedAt;
   final int itemCount;
   final List<OrderItem> items;
@@ -32,12 +37,20 @@ class Order {
     required this.status,
     required this.statusName,
     required this.createdAt,
+    this.confirmedAt,
+    this.preparingAt,
+    this.outForDeliveryAt,
+    this.deliveredAt,
+    this.cancelledAt,
     this.completedAt,
     required this.itemCount,
     this.items = const [],
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDate(dynamic v) =>
+        v == null ? null : DateTime.tryParse(v.toString());
+
     return Order(
       id: json['id'] as int? ?? 0,
       orderNumber: json['orderNumber'] as String? ?? '',
@@ -52,8 +65,13 @@ class Order {
       notes: json['notes'] as String?,
       status: json['status'] as int? ?? 0,
       statusName: json['statusName'] as String? ?? _getStatusName(json['status'] as int? ?? 0),
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
-      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt'] as String) : null,
+      createdAt: parseDate(json['createdAt']) ?? DateTime.now(),
+      confirmedAt: parseDate(json['confirmedAt']),
+      preparingAt: parseDate(json['preparingAt']),
+      outForDeliveryAt: parseDate(json['outForDeliveryAt']),
+      deliveredAt: parseDate(json['deliveredAt']),
+      cancelledAt: parseDate(json['cancelledAt']),
+      completedAt: parseDate(json['completedAt']),
       itemCount: json['itemCount'] as int? ?? 0,
       items: (json['items'] as List<dynamic>?)
               ?.map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
@@ -78,6 +96,11 @@ class Order {
       'status': status,
       'statusName': statusName,
       'createdAt': createdAt.toIso8601String(),
+      'confirmedAt': confirmedAt?.toIso8601String(),
+      'preparingAt': preparingAt?.toIso8601String(),
+      'outForDeliveryAt': outForDeliveryAt?.toIso8601String(),
+      'deliveredAt': deliveredAt?.toIso8601String(),
+      'cancelledAt': cancelledAt?.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
       'itemCount': itemCount,
       'items': items.map((item) => item.toJson()).toList(),
@@ -126,7 +149,7 @@ class OrderItem {
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     // Backend uses 'unitPrice' field, not 'price'
     final price = json['unitPrice'] ?? json['price'];
-    
+
     return OrderItem(
       id: json['id'] as int? ?? 0,
       productId: json['productId'] as int? ?? 0,

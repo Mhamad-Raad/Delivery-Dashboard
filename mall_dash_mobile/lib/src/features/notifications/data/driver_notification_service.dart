@@ -112,7 +112,8 @@ class DriverNotificationService {
 
       final baseUrl = dio.options.baseUrl;
       final baseUri = Uri.parse(baseUrl);
-      final hubUri = baseUri.replace(path: '${baseUri.path}/Notification');
+      // Backend hubs mount at the root (`/hubs/notifications`), not under the API path prefix.
+      final hubUri = baseUri.replace(path: '/hubs/notifications');
       final hubUrl = hubUri.toString();
 
       print('========================================');

@@ -106,7 +106,7 @@ class AuthNotifier extends Notifier<AuthStatus> {
       // Profile data
       ref.invalidate(userProfileProvider);
       
-      // Tenant/Customer data
+      // Customer data
       ref.invalidate(ordersProvider);
       ref.invalidate(ordersNotifierProvider);
       ref.invalidate(cartProvider);

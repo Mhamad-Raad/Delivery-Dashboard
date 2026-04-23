@@ -769,17 +769,8 @@ class DeliveryDetailsPage extends ConsumerWidget {
           ),
         ],
       );
-    } else if (order.status == 6) {
-      return _buildFullWidthGradientButton(
-        icon: Icons.local_shipping_rounded,
-        label: 'Mark In Transit',
-        gradient: LinearGradient(
-          colors: [appTheme.infoColor, appTheme.infoColor.withAlpha(200)],
-        ),
-        shadowColor: appTheme.infoColor,
-        onTap: () => _updateStatus(context, ref, order.id, DeliveryStatus.inTransit),
-      );
-    } else if (order.status == 7) {
+    } else if (order.status == 4) {
+      // Backend `OrderStatus.OutForDelivery = 4` — the only driver-actionable state.
       return _buildFullWidthGradientButton(
         icon: Icons.check_circle_rounded,
         label: 'Mark Delivered',

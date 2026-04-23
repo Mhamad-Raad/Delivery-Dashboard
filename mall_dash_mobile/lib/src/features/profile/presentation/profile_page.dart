@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/design/design_system.dart';
 import '../../../core/theme/custom_theme_extension.dart';
 import '../../../core/widgets/loading_indicator.dart';
+import '../../address/presentation/addresses_page.dart';
 import '../../auth/presentation/auth_notifier.dart';
 import '../../support/presentation/support_tickets_page.dart';
 import '../../settings/presentation/settings_page.dart';
@@ -119,6 +120,13 @@ class ProfilePage extends ConsumerWidget {
               title: 'Profile Information',
               subtitle: 'View and edit your details',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewProfilePage())),
+            ),
+            _MenuItem(
+              icon: Icons.location_on_outlined,
+              iconColor: AppColors.accent,
+              title: 'My Addresses',
+              subtitle: 'Manage delivery addresses',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressesPage())),
             ),
             _MenuItem(
               icon: Icons.support_agent_rounded,

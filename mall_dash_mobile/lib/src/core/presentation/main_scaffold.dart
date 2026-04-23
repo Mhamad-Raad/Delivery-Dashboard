@@ -15,6 +15,7 @@ import '../../features/notifications/presentation/notifications_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/driver/presentation/driver_home_page.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
+import '../../features/order/data/customer_order_stream_service.dart';
 import '../constants/user_role.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
@@ -26,6 +27,21 @@ class MainScaffold extends ConsumerStatefulWidget {
 
 class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _currentIndex = 1;
+  bool _customerStreamStarted = false;
+
+  @override
+  void dispose() {
+    if (_customerStreamStarted) {
+      ref.read(customerOrderStreamServiceProvider).stop();
+    }
+    super.dispose();
+  }
+
+  void _ensureCustomerStreamStarted() {
+    if (_customerStreamStarted) return;
+    _customerStreamStarted = true;
+    ref.read(customerOrderStreamServiceProvider).start();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +57,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         if (isDriver) {
           return const DriverHomePage();
         } else {
-          return _buildTenantScaffold(profile.firstName);
+          _ensureCustomerStreamStarted();
+          return _buildCustomerScaffold(profile.firstName);
         }
       },
       loading: () => const Scaffold(body: LoadingIndicator()),
@@ -66,7 +83,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     );
   }
 
-  Widget _buildTenantScaffold(String firstName) {
+  Widget _buildCustomerScaffold(String firstName) {
     final List<Widget> pages = const [OrdersPage(), HomePage(), ProfilePage()];
     final isDark = context.isDarkMode;
 

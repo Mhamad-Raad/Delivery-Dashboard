@@ -6,8 +6,6 @@ class UserProfile {
   final String phoneNumber;
   final String? profileImageUrl;
   final String? role;
-  final String? buildingName;
-  final String? apartmentNumber;
 
   UserProfile({
     required this.id,
@@ -17,21 +15,15 @@ class UserProfile {
     required this.phoneNumber,
     this.profileImageUrl,
     this.role,
-    this.buildingName,
-    this.apartmentNumber,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    // Backend uses different field names and types
-    // GET: {user: {_id, firstName, ...}} PUT: {_id, firstName, ...}
-    
-    // Handle role as int or String (backend returns int)
     String? roleStr;
     final roleValue = json['role'] ?? json['Role'];
     if (roleValue != null) {
       roleStr = roleValue.toString();
     }
-    
+
     return UserProfile(
       id: (json['_id'] ?? json['id'] ?? json['Id']) as String? ?? '',
       firstName: (json['firstName'] ?? json['FirstName']) as String? ?? '',
@@ -40,8 +32,6 @@ class UserProfile {
       phoneNumber: (json['phoneNumber'] ?? json['PhoneNumber']) as String? ?? '',
       profileImageUrl: (json['profileImageUrl'] ?? json['ProfileImageUrl']) as String?,
       role: roleStr,
-      buildingName: (json['buildingName'] ?? json['BuildingName']) as String?,
-      apartmentNumber: (json['apartmentNumber'] ?? json['ApartmentNumber'] ?? json['apartmentName']) as String?,
     );
   }
 
@@ -54,8 +44,6 @@ class UserProfile {
       'phoneNumber': phoneNumber,
       'profileImageUrl': profileImageUrl,
       'role': role,
-      'buildingName': buildingName,
-      'apartmentNumber': apartmentNumber,
     };
   }
 
