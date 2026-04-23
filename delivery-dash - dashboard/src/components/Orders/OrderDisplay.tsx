@@ -110,6 +110,18 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
     setCancelling(true);
     try {
       await dispatch(changeOrderStatus({ id: order.id, status: 5 })).unwrap();
+      // Don't wait for the SignalR round-trip — update local state immediately so the UI reflects the change
+      // even if the hub connection is down.
+      setOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: 'Cancelled',
+              cancelledAt: prev.cancelledAt ?? new Date().toISOString(),
+              completedAt: prev.completedAt ?? new Date().toISOString(),
+            }
+          : prev
+      );
       toast.success(t('detail.cancelled', { defaultValue: 'Order cancelled' }));
     } catch (err: any) {
       toast.error(
