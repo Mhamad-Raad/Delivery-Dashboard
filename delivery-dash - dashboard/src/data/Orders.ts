@@ -70,3 +70,25 @@ export const fetchOrderById = async (
   }
 };
 
+export const updateOrderStatus = async (
+  id: number,
+  status: number,
+): Promise<boolean | { error: string }> => {
+  try {
+    await axiosInstance.put(
+      `/Order/${id}/status`,
+      { status },
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+    return true;
+  } catch (error: any) {
+    console.error(`Error updating order ${id} status:`, error);
+    return {
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to update order status',
+    };
+  }
+};
+

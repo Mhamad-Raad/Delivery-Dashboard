@@ -13,6 +13,9 @@ import {
   Layers,
   Home,
   User,
+  ChefHat,
+  Truck,
+  XCircle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import { fetchOrderById } from '@/data/Orders';
 import { changeOrderStatus } from '@/store/slices/ordersSlice';
+import { signalRService } from '@/hooks/useSignalR';
 import type { AppDispatch } from '@/store/store';
 import type { Order, OrderStatus } from '@/interfaces/Order.interface';
 import { getStatusText } from '@/utils/orderUtils';
@@ -54,13 +58,15 @@ const getStatusColor = (status: OrderStatus | number) => {
   }
 };
 
+// Strict cancel policy: vendors can only cancel Pending / Confirmed.
+// Past Preparing the order is cost-incurred and must be cancelled by an admin.
 const statusTransitions: Record<string, number[]> = {
-  Pending: [1, 5], // Can go to Confirmed or Cancelled
-  Confirmed: [2, 5], // Can go to Preparing or Cancelled
-  Preparing: [3, 5], // Can go to OutForDelivery or Cancelled
-  OutForDelivery: [4, 5], // Can go to Delivered or Cancelled
-  Delivered: [], // Final state
-  Cancelled: [], // Final state
+  Pending: [1, 5], // Confirmed or Cancelled
+  Confirmed: [2, 5], // Preparing or Cancelled
+  Preparing: [3], // OutForDelivery only
+  OutForDelivery: [4], // Delivered only (driver-side action in practice)
+  Delivered: [],
+  Cancelled: [],
 };
 
 const numberToStatus: Record<number, string> = {
@@ -81,25 +87,42 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
   const { t } = useTranslation();
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadOrder = async () => {
       setLoading(true);
       setError(null);
 
       try {
         const result = await fetchOrderById(orderId);
+        if (cancelled) return;
         if ('error' in result) {
           setError(result.error);
         } else {
           setOrder(result);
         }
       } catch (err) {
-        setError(t('orders.detailErrorLoading'));
+        if (!cancelled) setError(t('orders.detailErrorLoading'));
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadOrder();
+
+    const unsubscribe = signalRService.onOrderStatusUpdated(async (payload) => {
+      if (payload.orderId !== orderId) return;
+      const refreshed = await fetchOrderById(orderId);
+      if (cancelled) return;
+      if (!('error' in refreshed)) {
+        setOrder(refreshed);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [orderId, t]);
 
   const handleStatusChange = async (newStatus: number) => {
@@ -374,33 +397,51 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
             {t('orders.detailActivityTitle')}
           </p>
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Clock className="h-4 w-4 text-primary" />
-              </div>
-              <div className="pt-1.5">
-                <p className="font-medium text-sm">
-                  {t('orders.detailOrderCreated')}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatDate(order.createdAt, 'MMMM dd, yyyy · hh:mm a')}
-                </p>
-              </div>
-            </div>
-            {order.completedAt && (
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-green-500/10">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </div>
-                <div className="pt-1.5">
-                  <p className="font-medium text-sm">
-                    {t('orders.detailOrderCompleted')}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatDate(order.completedAt, 'MMMM dd, yyyy · hh:mm a')}
-                  </p>
-                </div>
-              </div>
+            <TimelineEvent
+              label={t('orders.detailOrderCreated')}
+              timestamp={order.createdAt}
+              icon={<Clock className="h-4 w-4 text-primary" />}
+              iconBg="bg-primary/10"
+            />
+            {order.confirmedAt && (
+              <TimelineEvent
+                label="Confirmed"
+                timestamp={order.confirmedAt}
+                icon={<CheckCircle className="h-4 w-4 text-blue-600" />}
+                iconBg="bg-blue-500/10"
+              />
+            )}
+            {order.preparingAt && (
+              <TimelineEvent
+                label="Preparing"
+                timestamp={order.preparingAt}
+                icon={<ChefHat className="h-4 w-4 text-indigo-600" />}
+                iconBg="bg-indigo-500/10"
+              />
+            )}
+            {order.outForDeliveryAt && (
+              <TimelineEvent
+                label="Out for delivery"
+                timestamp={order.outForDeliveryAt}
+                icon={<Truck className="h-4 w-4 text-purple-600" />}
+                iconBg="bg-purple-500/10"
+              />
+            )}
+            {order.deliveredAt && (
+              <TimelineEvent
+                label={t('orders.detailOrderCompleted')}
+                timestamp={order.deliveredAt}
+                icon={<CheckCircle className="h-4 w-4 text-green-600" />}
+                iconBg="bg-green-500/10"
+              />
+            )}
+            {order.cancelledAt && (
+              <TimelineEvent
+                label="Cancelled"
+                timestamp={order.cancelledAt}
+                icon={<XCircle className="h-4 w-4 text-red-600" />}
+                iconBg="bg-red-500/10"
+              />
             )}
           </div>
         </div>
@@ -408,5 +449,26 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
     </div>
   );
 };
+
+interface TimelineEventProps {
+  label: string;
+  timestamp: string;
+  icon: React.ReactNode;
+  iconBg: string;
+}
+
+const TimelineEvent = ({ label, timestamp, icon, iconBg }: TimelineEventProps) => (
+  <div className="flex items-start gap-3">
+    <div className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full', iconBg)}>
+      {icon}
+    </div>
+    <div className="pt-1.5">
+      <p className="font-medium text-sm">{label}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">
+        {formatDate(timestamp, 'MMMM dd, yyyy · hh:mm a')}
+      </p>
+    </div>
+  </div>
+);
 
 export default OrderDisplay;

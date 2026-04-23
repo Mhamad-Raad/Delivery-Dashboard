@@ -5,7 +5,10 @@ import type {
   OrdersState,
   OrderStatus,
 } from '@/interfaces/Order.interface';
-import { fetchOrders as fetchOrdersAPI } from '@/data/Orders';
+import {
+  fetchOrders as fetchOrdersAPI,
+  updateOrderStatus as updateOrderStatusAPI,
+} from '@/data/Orders';
 
 const initialState: OrdersState = {
   orders: [],
@@ -16,6 +19,24 @@ const initialState: OrdersState = {
   total: 0,
   statusFilter: 'All',
 };
+
+export const changeOrderStatus = createAsyncThunk(
+  'orders/changeOrderStatus',
+  async (
+    params: { id: number; status: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const result = await updateOrderStatusAPI(params.id, params.status);
+      if (result !== true && 'error' in result) {
+        return rejectWithValue(result.error);
+      }
+      return params;
+    } catch (error) {
+      return rejectWithValue('Failed to update order status');
+    }
+  }
+);
 
 export const fetchOrders = createAsyncThunk(
   'orders/fetchOrders',
@@ -82,6 +103,15 @@ const ordersSlice = createSlice({
         }
       }
     },
+    updateOrderStatus: (
+      state,
+      action: PayloadAction<{ id: number; status: OrderStatus | number }>
+    ) => {
+      const order = state.orders.find((o) => o.id === action.payload.id);
+      if (order) {
+        order.status = action.payload.status;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -124,7 +154,12 @@ const ordersSlice = createSlice({
   },
 });
 
-export const { setPage, setLimit, setStatusFilter, addOrder } =
-  ordersSlice.actions;
+export const {
+  setPage,
+  setLimit,
+  setStatusFilter,
+  addOrder,
+  updateOrderStatus,
+} = ordersSlice.actions;
 export default ordersSlice.reducer;
 

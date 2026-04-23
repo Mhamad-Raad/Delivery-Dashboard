@@ -15,11 +15,21 @@ import { fetchOrderById } from '@/data/Orders';
 import type { Notification } from '@/interfaces/Notification.interface';
 import type { OrderStatus } from '@/interfaces/Order.interface';
 
+export interface OrderStatusUpdatedPayload {
+  orderId: number;
+  orderNumber: string;
+  status: OrderStatus | number;
+  previousStatus: OrderStatus | number | null;
+  timestamp: string;
+  triggeredBy: string;
+}
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private notificationCallbacks: ((notification: Notification) => void)[] = [];
+  private orderStatusCallbacks: ((payload: OrderStatusUpdatedPayload) => void)[] = [];
   private connectionStateCallbacks: ((
     state: signalR.HubConnectionState
   ) => void)[] = [];
@@ -104,6 +114,18 @@ class SignalRService {
         );
       });
 
+      this.connection.on('OrderStatusUpdated', (payload: any) => {
+        const normalized: OrderStatusUpdatedPayload = {
+          orderId: payload.OrderId ?? payload.orderId,
+          orderNumber: payload.OrderNumber ?? payload.orderNumber,
+          status: payload.Status ?? payload.status,
+          previousStatus: payload.PreviousStatus ?? payload.previousStatus ?? null,
+          timestamp: payload.Timestamp ?? payload.timestamp,
+          triggeredBy: payload.TriggeredBy ?? payload.triggeredBy,
+        };
+        this.orderStatusCallbacks.forEach((cb) => cb(normalized));
+      });
+
       try {
         await this.connection.start();
         console.log('✅ SignalR Connected successfully');
@@ -166,6 +188,17 @@ class SignalRService {
     };
   }
 
+  public onOrderStatusUpdated(
+    callback: (payload: OrderStatusUpdatedPayload) => void
+  ): () => void {
+    this.orderStatusCallbacks.push(callback);
+    return () => {
+      this.orderStatusCallbacks = this.orderStatusCallbacks.filter(
+        (cb) => cb !== callback
+      );
+    };
+  }
+
   public onConnectionStateChanged(
     callback: (state: signalR.HubConnectionState) => void
   ): () => void {
@@ -204,11 +237,23 @@ export const useSignalR = () => {
       }
     );
 
+    const unsubscribeOrderStatus = signalRService.onOrderStatusUpdated(
+      (payload) => {
+        dispatch(
+          updateOrderStatus({
+            id: payload.orderId,
+            status: payload.status as OrderStatus,
+          })
+        );
+      }
+    );
+
     const unsubscribeNotification = signalRService.onNotificationReceived(
       async (notification) => {
         dispatch(addNotification(notification));
 
-        // Handle Order Updates via SignalR
+        // "New Order" still piggybacks on the generic notification channel — it's not a status change.
+        // Status updates now arrive via the dedicated OrderStatusUpdated event below, so we don't parse metadata.status here.
         try {
           if (notification.metadata) {
             const metadata =
@@ -216,35 +261,19 @@ export const useSignalR = () => {
                 ? JSON.parse(notification.metadata)
                 : notification.metadata;
 
-            if (metadata?.orderId) {
-              // New Order or Status Update
-              if (
-                notification.title.includes('New Order') ||
-                notification.title.includes('Order Created')
-              ) {
-                const newOrder = await fetchOrderById(metadata.orderId);
-                if (!('error' in newOrder)) {
-                  dispatch(addOrder(newOrder));
-                }
-              } else if (metadata.status) {
-                dispatch(
-                  updateOrderStatus({
-                    id: metadata.orderId,
-                    status: metadata.status as OrderStatus,
-                  })
-                );
-              } else if (notification.title.includes('Cancelled')) {
-                dispatch(
-                  updateOrderStatus({
-                    id: metadata.orderId,
-                    status: 'Cancelled',
-                  })
-                );
+            if (
+              metadata?.orderId &&
+              (notification.title.includes('New Order') ||
+                notification.title.includes('Order Created'))
+            ) {
+              const newOrder = await fetchOrderById(metadata.orderId);
+              if (!('error' in newOrder)) {
+                dispatch(addOrder(newOrder));
               }
             }
           }
         } catch (error) {
-          console.error('Error processing real-time order update:', error);
+          console.error('Error processing real-time order notification:', error);
         }
 
         // Show toast for new notification
@@ -282,6 +311,7 @@ export const useSignalR = () => {
     return () => {
       isMounted = false;
       unsubscribeNotification();
+      unsubscribeOrderStatus();
       unsubscribeConnection();
       signalRService.stopConnection();
     };

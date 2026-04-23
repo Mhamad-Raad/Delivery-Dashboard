@@ -39,7 +39,12 @@ export interface Order {
   status: OrderStatus | number;
   notes?: string;
   createdAt: string;
-  completedAt?: string;
+  confirmedAt?: string | null;
+  preparingAt?: string | null;
+  outForDeliveryAt?: string | null;
+  deliveredAt?: string | null;
+  cancelledAt?: string | null;
+  completedAt?: string | null;
   customerName?: string;
   userName?: string;
   items?: OrderItem[];

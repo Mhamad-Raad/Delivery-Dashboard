@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import {
   Clock,
   MapPin,
@@ -10,19 +11,28 @@ import {
   Layers,
   Home,
   User,
+  Loader2,
+  XCircle,
+  ChefHat,
+  Truck,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import { fetchOrderById } from '@/data/Orders';
+import { changeOrderStatus } from '@/store/slices/ordersSlice';
+import { signalRService } from '@/hooks/useSignalR';
+import type { AppDispatch } from '@/store/store';
 import type { Order, OrderStatus } from '@/interfaces/Order.interface';
 import { getStatusText } from '@/utils/orderUtils';
 import { formatDate } from '@/utils/dateUtils';
 import { cn } from '@/lib/utils';
 import { OrderDisplaySkeleton } from './OrderDisplaySkeleton';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 interface OrderDisplayProps {
   orderId: number;
@@ -49,32 +59,68 @@ const getStatusColor = (status: OrderStatus | number) => {
 };
 
 const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('orders');
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadOrder = async () => {
       setLoading(true);
       setError(null);
 
       try {
         const result = await fetchOrderById(orderId);
+        if (cancelled) return;
         if ('error' in result) {
           setError(result.error);
         } else {
           setOrder(result);
         }
       } catch (err) {
-        setError('Failed to load order details');
+        if (!cancelled) setError('Failed to load order details');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadOrder();
+
+    const unsubscribe = signalRService.onOrderStatusUpdated(async (payload) => {
+      if (payload.orderId !== orderId) return;
+      const refreshed = await fetchOrderById(orderId);
+      if (cancelled) return;
+      if (!('error' in refreshed)) {
+        setOrder(refreshed);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [orderId]);
+
+  const handleCancel = async () => {
+    if (!order) return;
+    setCancelling(true);
+    try {
+      await dispatch(changeOrderStatus({ id: order.id, status: 5 })).unwrap();
+      toast.success(t('detail.cancelled', { defaultValue: 'Order cancelled' }));
+    } catch (err: any) {
+      toast.error(
+        typeof err === 'string'
+          ? err
+          : t('detail.cancelFailed', { defaultValue: 'Failed to cancel order' })
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) {
     return <OrderDisplaySkeleton />;
@@ -91,6 +137,7 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
   }
 
   const currentStatusText = getStatusText(order.status);
+  const isTerminal = currentStatusText === 'Delivered' || currentStatusText === 'Cancelled';
 
   return (
     <div className="h-full overflow-y-auto">
@@ -290,39 +337,82 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
           </div>
         )}
 
+        {/* Admin actions — override cancel */}
+        {!isTerminal && (
+          <div className="px-6 py-5 border-b">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Admin override
+            </p>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleCancel}
+              disabled={cancelling}
+            >
+              {cancelling ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" />
+              )}
+              Cancel order
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Cancelling after dispatch will stop an in-progress delivery.
+            </p>
+          </div>
+        )}
+
         {/* Timeline */}
         <div className="px-6 py-5">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
             {t('detail.activitySection')}
           </p>
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Clock className="h-4 w-4 text-primary" />
-              </div>
-              <div className="pt-1.5">
-                <p className="font-medium text-sm">
-                  {t('detail.orderCreated')}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatDate(order.createdAt, 'MMMM dd, yyyy · hh:mm a')}
-                </p>
-              </div>
-            </div>
-            {order.completedAt && (
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-green-500/10">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </div>
-                <div className="pt-1.5">
-                  <p className="font-medium text-sm">
-                    {t('detail.orderCompleted')}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatDate(order.completedAt, 'MMMM dd, yyyy · hh:mm a')}
-                  </p>
-                </div>
-              </div>
+            <TimelineEvent
+              label={t('detail.orderCreated')}
+              timestamp={order.createdAt}
+              icon={<Clock className="h-4 w-4 text-primary" />}
+              iconBg="bg-primary/10"
+            />
+            {order.confirmedAt && (
+              <TimelineEvent
+                label="Order confirmed"
+                timestamp={order.confirmedAt}
+                icon={<CheckCircle className="h-4 w-4 text-blue-600" />}
+                iconBg="bg-blue-500/10"
+              />
+            )}
+            {order.preparingAt && (
+              <TimelineEvent
+                label="Preparing"
+                timestamp={order.preparingAt}
+                icon={<ChefHat className="h-4 w-4 text-indigo-600" />}
+                iconBg="bg-indigo-500/10"
+              />
+            )}
+            {order.outForDeliveryAt && (
+              <TimelineEvent
+                label="Out for delivery"
+                timestamp={order.outForDeliveryAt}
+                icon={<Truck className="h-4 w-4 text-purple-600" />}
+                iconBg="bg-purple-500/10"
+              />
+            )}
+            {order.deliveredAt && (
+              <TimelineEvent
+                label={t('detail.orderCompleted')}
+                timestamp={order.deliveredAt}
+                icon={<CheckCircle className="h-4 w-4 text-green-600" />}
+                iconBg="bg-green-500/10"
+              />
+            )}
+            {order.cancelledAt && (
+              <TimelineEvent
+                label="Cancelled"
+                timestamp={order.cancelledAt}
+                icon={<XCircle className="h-4 w-4 text-red-600" />}
+                iconBg="bg-red-500/10"
+              />
             )}
           </div>
         </div>
@@ -330,5 +420,26 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
     </div>
   );
 };
+
+interface TimelineEventProps {
+  label: string;
+  timestamp: string;
+  icon: React.ReactNode;
+  iconBg: string;
+}
+
+const TimelineEvent = ({ label, timestamp, icon, iconBg }: TimelineEventProps) => (
+  <div className="flex items-start gap-3">
+    <div className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full', iconBg)}>
+      {icon}
+    </div>
+    <div className="pt-1.5">
+      <p className="font-medium text-sm">{label}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">
+        {formatDate(timestamp, 'MMMM dd, yyyy · hh:mm a')}
+      </p>
+    </div>
+  </div>
+);
 
 export default OrderDisplay;

@@ -16,6 +16,11 @@ namespace DeliveryDash.Application.Responses.OrderResponses
         public OrderStatus Status { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? ConfirmedAt { get; set; }
+        public DateTime? PreparingAt { get; set; }
+        public DateTime? OutForDeliveryAt { get; set; }
+        public DateTime? DeliveredAt { get; set; }
+        public DateTime? CancelledAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public int ItemCount { get; set; }
     }

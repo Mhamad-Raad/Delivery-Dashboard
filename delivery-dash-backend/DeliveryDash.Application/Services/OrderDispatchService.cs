@@ -24,6 +24,7 @@ namespace DeliveryDash.Application.Services
         private readonly IDriverShiftService _shiftService;
         private readonly IDriverNotificationService _notificationService;
         private readonly INotificationService _userNotificationService;
+        private readonly INotificationHubService _notificationHubService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly OrderDispatchSettings _settings;
         private readonly ILogger<OrderDispatchService> _logger;
@@ -36,6 +37,7 @@ namespace DeliveryDash.Application.Services
             IDriverShiftService shiftService,
             IDriverNotificationService notificationService,
             INotificationService userNotificationService,
+            INotificationHubService notificationHubService,
             IUnitOfWork unitOfWork,
             IOptions<OrderDispatchSettings> settings,
             ILogger<OrderDispatchService> logger)
@@ -47,6 +49,7 @@ namespace DeliveryDash.Application.Services
             _shiftService = shiftService;
             _notificationService = notificationService;
             _userNotificationService = userNotificationService;
+            _notificationHubService = notificationHubService;
             _unitOfWork = unitOfWork;
             _settings = settings.Value;
             _logger = logger;
@@ -123,6 +126,7 @@ namespace DeliveryDash.Application.Services
         private async Task CancelOrderDueToNoDriverAsync(Order order, CancellationToken ct)
         {
             var now = DateTime.UtcNow;
+            var previousStatus = order.Status;
 
             await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
 
@@ -153,6 +157,15 @@ namespace DeliveryDash.Application.Services
 
             await tx.CommitAsync(ct);
 
+            if (vendor != null)
+            {
+                await _notificationHubService.BroadcastOrderStatusAsync(
+                    new OrderStatusUpdatedPayload(
+                        order.Id, order.OrderNumber, OrderStatus.Cancelled, previousStatus, now, "System"),
+                    order.UserId,
+                    vendor.UserId);
+            }
+
             _logger.LogInformation(
                 "Order {OrderId} cancelled due to no driver available after {MaxAttempts} attempts",
                 order.Id, _settings.MaxDispatchAttempts);
@@ -181,15 +194,30 @@ namespace DeliveryDash.Application.Services
             assignment.RespondedAt = now;
             var updatedAssignment = await _assignmentRepository.UpdateAsync(assignment, ct);
 
+            OrderStatus? previousStatus = null;
             var order = await _orderRepository.GetByIdAsync(assignment.OrderId);
             if (order != null)
             {
+                previousStatus = order.Status;
                 order.Status = OrderStatus.OutForDelivery;
                 order.OutForDeliveryAt = now;
                 await _orderRepository.UpdateAsync(order);
             }
 
             await tx.CommitAsync(ct);
+
+            if (order != null)
+            {
+                var vendor = await _vendorRepository.GetByIdAsync(order.VendorId);
+                if (vendor != null)
+                {
+                    await _notificationHubService.BroadcastOrderStatusAsync(
+                        new OrderStatusUpdatedPayload(
+                            order.Id, order.OrderNumber, OrderStatus.OutForDelivery, previousStatus, now, "Driver"),
+                        order.UserId,
+                        vendor.UserId);
+                }
+            }
 
             _logger.LogInformation(
                 "Driver {DriverId} accepted order {OrderId}",
@@ -244,6 +272,7 @@ namespace DeliveryDash.Application.Services
                 ?? throw new InvalidOperationException("Order not found");
 
             var now = DateTime.UtcNow;
+            var previousStatus = order.Status;
 
             await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
 
@@ -258,6 +287,16 @@ namespace DeliveryDash.Application.Services
             }
 
             await tx.CommitAsync(ct);
+
+            var vendor = await _vendorRepository.GetByIdAsync(order.VendorId);
+            if (vendor != null)
+            {
+                await _notificationHubService.BroadcastOrderStatusAsync(
+                    new OrderStatusUpdatedPayload(
+                        order.Id, order.OrderNumber, OrderStatus.Delivered, previousStatus, now, "Driver"),
+                    order.UserId,
+                    vendor.UserId);
+            }
 
             _logger.LogInformation(
                 "Driver {DriverId} completed delivery for order {OrderId}",

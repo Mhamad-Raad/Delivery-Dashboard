@@ -20,6 +20,7 @@ namespace DeliveryDash.Application.Services
         private readonly IVendorRepository _vendorRepository;
         private readonly IAddressRepository _addressRepository;
         private readonly INotificationService _notificationService;
+        private readonly INotificationHubService _notificationHubService;
         private readonly IOrderDispatchService _orderDispatchService;
         private readonly IOrderAssignmentRepository _orderAssignmentRepository;
         private readonly IValidator<CreateOrderRequest> _createValidator;
@@ -33,6 +34,7 @@ namespace DeliveryDash.Application.Services
             IVendorRepository vendorRepository,
             IAddressRepository addressRepository,
             INotificationService notificationService,
+            INotificationHubService notificationHubService,
             IOrderDispatchService orderDispatchService,
             IOrderAssignmentRepository orderAssignmentRepository,
             IValidator<CreateOrderRequest> createValidator,
@@ -45,6 +47,7 @@ namespace DeliveryDash.Application.Services
             _vendorRepository = vendorRepository;
             _addressRepository = addressRepository;
             _notificationService = notificationService;
+            _notificationHubService = notificationHubService;
             _orderDispatchService = orderDispatchService;
             _orderAssignmentRepository = orderAssignmentRepository;
             _createValidator = createValidator;
@@ -285,6 +288,16 @@ namespace DeliveryDash.Application.Services
                 _logger.LogWarning("Order {OrderId} is Preparing but no driver could be dispatched yet", order.Id);
             }
 
+            var vendorForBroadcast = await _vendorRepository.GetByIdAsync(order.VendorId);
+            if (vendorForBroadcast != null)
+            {
+                await _notificationHubService.BroadcastOrderStatusAsync(
+                    new OrderStatusUpdatedPayload(
+                        order.Id, order.OrderNumber, order.Status, previousStatus, now, userRole.ToString()),
+                    order.UserId,
+                    vendorForBroadcast.UserId);
+            }
+
             return MapToDetailResponse(updatedOrder);
         }
 
@@ -309,6 +322,7 @@ namespace DeliveryDash.Application.Services
                 throw new InvalidOrderStatusTransitionException(order.Status, OrderStatus.Cancelled);
 
             var now = DateTime.UtcNow;
+            var previousStatus = order.Status;
 
             await using var tx = await _unitOfWork.BeginTransactionAsync();
 
@@ -331,6 +345,15 @@ namespace DeliveryDash.Application.Services
             }
 
             await tx.CommitAsync();
+
+            if (vendor != null)
+            {
+                await _notificationHubService.BroadcastOrderStatusAsync(
+                    new OrderStatusUpdatedPayload(
+                        order.Id, order.OrderNumber, OrderStatus.Cancelled, previousStatus, now, userRole.ToString()),
+                    order.UserId,
+                    vendor.UserId);
+            }
 
             return MapToDetailResponse(updatedOrder);
         }
@@ -435,6 +458,11 @@ namespace DeliveryDash.Application.Services
                 Status = order.Status,
                 Notes = order.Notes,
                 CreatedAt = order.CreatedAt,
+                ConfirmedAt = order.ConfirmedAt,
+                PreparingAt = order.PreparingAt,
+                OutForDeliveryAt = order.OutForDeliveryAt,
+                DeliveredAt = order.DeliveredAt,
+                CancelledAt = order.CancelledAt,
                 CompletedAt = order.CompletedAt,
                 ItemCount = order.OrderItems.Count
             };
@@ -475,6 +503,11 @@ namespace DeliveryDash.Application.Services
                 Status = order.Status,
                 Notes = order.Notes,
                 CreatedAt = order.CreatedAt,
+                ConfirmedAt = order.ConfirmedAt,
+                PreparingAt = order.PreparingAt,
+                OutForDeliveryAt = order.OutForDeliveryAt,
+                DeliveredAt = order.DeliveredAt,
+                CancelledAt = order.CancelledAt,
                 CompletedAt = order.CompletedAt,
                 Items = order.OrderItems.Select(oi => new OrderItemResponse
                 {

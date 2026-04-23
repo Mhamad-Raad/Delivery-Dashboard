@@ -10,25 +10,41 @@ namespace DeliveryDash.API.Hubs
         public override async Task OnConnectedAsync()
         {
             var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+
             if (!string.IsNullOrEmpty(userId))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
             }
-            
+
+            if (IsAdmin(Context.User))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, "role_admin");
+            }
+
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+
             if (!string.IsNullOrEmpty(userId))
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{userId}");
             }
-            
+
+            if (IsAdmin(Context.User))
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, "role_admin");
+            }
+
             await base.OnDisconnectedAsync(exception);
+        }
+
+        private static bool IsAdmin(System.Security.Claims.ClaimsPrincipal? user)
+        {
+            if (user == null) return false;
+            return user.IsInRole("Admin") || user.IsInRole("SuperAdmin");
         }
 
         public async Task MarkAsRead(int notificationId)

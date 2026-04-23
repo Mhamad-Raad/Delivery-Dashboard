@@ -8,15 +8,27 @@ import {
   setNotifications,
   setConnectionStatus,
 } from '@/store/slices/notificationsSlice';
+import { updateOrderStatus } from '@/store/slices/ordersSlice';
 import { fetchNotifications } from '@/data/Notifications';
 
 import type { Notification } from '@/interfaces/Notification.interface';
+import type { OrderStatus } from '@/interfaces/Order.interface';
+
+export interface OrderStatusUpdatedPayload {
+  orderId: number;
+  orderNumber: string;
+  status: OrderStatus | number;
+  previousStatus: OrderStatus | number | null;
+  timestamp: string;
+  triggeredBy: string;
+}
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private notificationCallbacks: ((notification: Notification) => void)[] = [];
+  private orderStatusCallbacks: ((payload: OrderStatusUpdatedPayload) => void)[] = [];
   private connectionStateCallbacks: ((state: signalR.HubConnectionState) => void)[] = [];
 
   public async startConnection(): Promise<void> {
@@ -59,7 +71,7 @@ class SignalRService {
     // Listen for notifications from backend
     this.connection.on('ReceiveNotification', (notification: any) => {
       console.log('Received notification:', notification);
-      
+
       const processedNotification: Notification = {
         id: notification.Id ?? notification.id,
         title: notification.Title ?? notification.title,
@@ -70,8 +82,20 @@ class SignalRService {
         actionUrl: notification.ActionUrl ?? notification.actionUrl,
         metadata: notification.Metadata ?? notification.metadata,
       };
-      
+
       this.notificationCallbacks.forEach((callback) => callback(processedNotification));
+    });
+
+    this.connection.on('OrderStatusUpdated', (payload: any) => {
+      const normalized: OrderStatusUpdatedPayload = {
+        orderId: payload.OrderId ?? payload.orderId,
+        orderNumber: payload.OrderNumber ?? payload.orderNumber,
+        status: payload.Status ?? payload.status,
+        previousStatus: payload.PreviousStatus ?? payload.previousStatus ?? null,
+        timestamp: payload.Timestamp ?? payload.timestamp,
+        triggeredBy: payload.TriggeredBy ?? payload.triggeredBy,
+      };
+      this.orderStatusCallbacks.forEach((cb) => cb(normalized));
     });
 
     try {
@@ -109,6 +133,13 @@ class SignalRService {
     this.notificationCallbacks.push(callback);
     return () => {
       this.notificationCallbacks = this.notificationCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  public onOrderStatusUpdated(callback: (payload: OrderStatusUpdatedPayload) => void): () => void {
+    this.orderStatusCallbacks.push(callback);
+    return () => {
+      this.orderStatusCallbacks = this.orderStatusCallbacks.filter((cb) => cb !== callback);
     };
   }
 
@@ -184,11 +215,16 @@ export function useSignalR(isAuthorized: boolean = false) {
       });
     });
 
+    // Subscribe to order status updates (list-view sync)
+    const unsubscribeOrderStatus = signalRService.onOrderStatusUpdated((payload) => {
+      dispatch(updateOrderStatus({ id: payload.orderId, status: payload.status }));
+    });
+
     // Subscribe to connection state changes
     const unsubscribeConnectionState = signalRService.onConnectionStateChange((state) => {
       const isConnected = state === signalR.HubConnectionState.Connected;
       dispatch(setConnectionStatus(isConnected));
-      
+
       if (state === signalR.HubConnectionState.Reconnecting) {
         toast.warning('Connection lost', {
           description: 'Attempting to reconnect...',
@@ -199,6 +235,7 @@ export function useSignalR(isAuthorized: boolean = false) {
     // Cleanup on unmount
     return () => {
       unsubscribeNotification();
+      unsubscribeOrderStatus();
       unsubscribeConnectionState();
       signalRService.stopConnection();
       isInitialized.current = false;
