@@ -58,24 +58,25 @@ const getStatusColor = (status: OrderStatus | number) => {
   }
 };
 
+// Backend OrderStatus enum: Pending=1, Confirmed=2, Preparing=3, OutForDelivery=4, Delivered=5, Cancelled=6.
 // Strict cancel policy: vendors can only cancel Pending / Confirmed.
 // Past Preparing the order is cost-incurred and must be cancelled by an admin.
 const statusTransitions: Record<string, number[]> = {
-  Pending: [1, 5], // Confirmed or Cancelled
-  Confirmed: [2, 5], // Preparing or Cancelled
-  Preparing: [3], // OutForDelivery only
-  OutForDelivery: [4], // Delivered only (driver-side action in practice)
+  Pending: [2, 6], // Confirmed or Cancelled
+  Confirmed: [3, 6], // Preparing or Cancelled
+  Preparing: [4], // OutForDelivery only
+  OutForDelivery: [5], // Delivered only (driver-side action in practice)
   Delivered: [],
   Cancelled: [],
 };
 
 const numberToStatus: Record<number, string> = {
-  0: 'Pending',
-  1: 'Confirmed',
-  2: 'Preparing',
-  3: 'OutForDelivery',
-  4: 'Delivered',
-  5: 'Cancelled',
+  1: 'Pending',
+  2: 'Confirmed',
+  3: 'Preparing',
+  4: 'OutForDelivery',
+  5: 'Delivered',
+  6: 'Cancelled',
 };
 
 const OrderDisplay = ({ orderId }: OrderDisplayProps) => {

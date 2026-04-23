@@ -109,7 +109,7 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
     if (!order) return;
     setCancelling(true);
     try {
-      await dispatch(changeOrderStatus({ id: order.id, status: 5 })).unwrap();
+      await dispatch(changeOrderStatus({ id: order.id, status: 6 })).unwrap();
       // Don't wait for the SignalR round-trip — update local state immediately so the UI reflects the change
       // even if the hub connection is down.
       setOrder((prev) =>
