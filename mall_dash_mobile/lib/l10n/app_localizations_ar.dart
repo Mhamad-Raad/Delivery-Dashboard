@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'Mall Dash';
+  String get appTitle => 'Delivery Dash';
 
   @override
   String get theme => 'المظهر';

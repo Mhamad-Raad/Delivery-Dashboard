@@ -59,7 +59,7 @@ class MyApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp(
-      title: 'Mall Dash',
+      title: 'Delivery Dash',
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: _buildLightTheme(),

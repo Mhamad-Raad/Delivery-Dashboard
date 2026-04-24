@@ -1,8 +1,8 @@
-/// Barrel export for the Mall Dash design system.
-/// 
+/// Barrel export for the Delivery Dash design system.
+///
 /// Usage:
 /// ```dart
-/// import 'package:mall_dash/src/core/design/design_system.dart';
+/// import 'package:delivery_dash_mobile/src/core/design/design_system.dart';
 /// ```
 /// 
 /// This gives access to:

@@ -15,6 +15,7 @@ import VendorCategories from './pages/vendor-categories/VendorCategories';
 import Profile from './pages/Profile';
 import Reports from './pages/Reports';
 import Notifications from './pages/notifications/Notifications';
+import CreateNotification from './pages/notifications/CreateNotification';
 import Themes from './pages/settings/Themes';
 import Products from './pages/products/Products';
 import CreateProduct from './pages/products/CreateProduct';
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
       {
         path: '/notifications',
         element: <Notifications />,
+      },
+      {
+        path: '/notifications/new',
+        element: <CreateNotification />,
       },
       {
         path: '/history',

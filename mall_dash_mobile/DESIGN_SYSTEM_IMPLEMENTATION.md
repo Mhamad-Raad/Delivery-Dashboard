@@ -1,8 +1,8 @@
-# Mall-Dash-Mobile Design System Implementation Guide
+# Delivery-Dash-Mobile Design System Implementation Guide
 
 ## Overview
 
-This document outlines the centralized design system implemented for the Mall-Dash-Mobile Flutter application. The design system provides:
+This document outlines the centralized design system implemented for the Delivery-Dash-Mobile Flutter application. The design system provides:
 
 - **Centralized styling** - All colors, spacing, typography, and shadows defined in one place
 - **Dark/Light mode support** - Seamless theme switching with proper color variants

@@ -57,7 +57,7 @@ class _DriverHomePageState extends ConsumerState<DriverHomePage> {
     return AppBar(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
       title: Text(
-        'Mall Dash',
+        'Delivery Dash',
         style: GoogleFonts.inter(
           fontSize: 22,
           fontWeight: FontWeight.w800,

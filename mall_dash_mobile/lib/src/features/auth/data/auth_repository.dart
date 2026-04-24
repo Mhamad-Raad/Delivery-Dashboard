@@ -10,6 +10,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(dio: dio, tokenStorage: tokenStorage);
 });
 
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+  @override
+  String toString() => message;
+}
+
 class AuthRepository {
   final Dio _dio;
   final TokenStorageService _tokenStorage;
@@ -43,7 +50,7 @@ class AuthRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data as Map<String, dynamic>;
-        
+
         developer.log(
           'Login response data',
           name: 'AuthRepository',
@@ -79,31 +86,74 @@ class AuthRepository {
             name: 'AuthRepository',
             error: 'Response keys: ${data.keys.join(", ")}, Full data: $data',
           );
-          throw Exception('Login succeeded but server did not return authentication tokens');
+          throw AuthException('Login succeeded but server did not return authentication tokens.');
         }
 
         return data;
       } else {
-        throw Exception('Login failed: ${response.statusCode} - ${response.statusMessage}');
+        throw AuthException('Login failed. Please try again.');
       }
     } on DioException catch (e) {
-      developer.log('Login failed with DioException', name: 'AuthRepository', error: e.toString());
-      
-      String errorMessage = 'Login failed';
-      if (e.response?.data != null) {
-        final errorData = e.response!.data;
-        if (errorData is Map && errorData.containsKey('message')) {
-          errorMessage = errorData['message'];
-        } else if (errorData is String) {
-          errorMessage = errorData;
-        }
-      }
-      
-      throw Exception(errorMessage);
+      developer.log(
+        'Login failed with DioException',
+        name: 'AuthRepository',
+        error: 'Type: ${e.type}, Status: ${e.response?.statusCode}, Data: ${e.response?.data}',
+      );
+
+      throw AuthException(_parseDioError(e));
     } catch (e) {
       developer.log('Login failed with exception', name: 'AuthRepository', error: e.toString());
-      rethrow;
+      if (e is AuthException) rethrow;
+      throw AuthException('Something went wrong. Please try again.');
     }
+  }
+
+  String _parseDioError(DioException e) {
+    // Network / connectivity failures come back with no response body.
+    switch (e.type) {
+      case DioExceptionType.connectionError:
+        return 'Unable to connect. Please check your internet and try again.';
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'The server took too long to respond. Please try again.';
+      default:
+        break;
+    }
+
+    final status = e.response?.statusCode;
+
+    // 401 = wrong credentials. Show a clean, generic message (don't echo the
+    // email back from the backend — that leaks which accounts exist).
+    if (status == 401) {
+      return 'Invalid email or password.';
+    }
+
+    final data = e.response?.data;
+    if (data is Map) {
+      // Backend's GlobalExceptionHandler shape: { error, errors[], statusCode }
+      final errorsField = data['errors'];
+      if (errorsField is List && errorsField.isNotEmpty) {
+        return errorsField.map((x) => x.toString()).join('\n');
+      }
+      final errorField = data['error'];
+      if (errorField is String && errorField.isNotEmpty) {
+        return errorField;
+      }
+      // Fallback: some older endpoints may use "message".
+      final messageField = data['message'];
+      if (messageField is String && messageField.isNotEmpty) {
+        return messageField;
+      }
+    } else if (data is String && data.isNotEmpty) {
+      return data;
+    }
+
+    if (status != null && status >= 500) {
+      return 'Server error. Please try again in a moment.';
+    }
+
+    return 'Login failed. Please try again.';
   }
 
   Future<bool> validateToken() async {

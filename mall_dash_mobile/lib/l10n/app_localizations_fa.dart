@@ -9,7 +9,7 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
-  String get appTitle => 'Mall Dash';
+  String get appTitle => 'Delivery Dash';
 
   @override
   String get theme => 'رواڵەت';

@@ -36,5 +36,9 @@ namespace DeliveryDash.Application.Abstracts.IService
             BroadcastAudience audience,
             IEnumerable<Guid>? specificUserIds,
             CancellationToken ct = default);
+
+        Task<List<BroadcastSummaryResponse>> GetBroadcastsAsync(int skip, int take);
+        Task<BroadcastSummaryResponse?> GetBroadcastAsync(int key);
+        Task<int> DeleteBroadcastAsync(int key);
     }
 }

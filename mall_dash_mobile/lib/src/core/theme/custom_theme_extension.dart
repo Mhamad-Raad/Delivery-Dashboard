@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../design/app_colors.dart';
 
-/// Extended theme data for Mall Dash app.
+/// Extended theme data for Delivery Dash app.
 /// Contains semantic colors for status indicators, order statuses, and UI elements.
 @immutable
 class CustomThemeExtension extends ThemeExtension<CustomThemeExtension> {

@@ -1,7 +1,7 @@
 # Driver Issues - Fixed and Pending
 
 ## Summary
-This document tracks the resolution of driver-related issues in the Mall Dash Mobile app.
+This document tracks the resolution of driver-related issues in the Delivery Dash Mobile app.
 
 ## Issues Reported
 

@@ -20,7 +20,7 @@ void main() {
 
     // Verify title is present. Note: find.text might find multiple if used in AppBar and Body.
     // In our case, it's in AppBar and Body.
-    expect(find.text('Mall Dash'), findsAtLeastNWidgets(1));
+    expect(find.text('Delivery Dash'), findsAtLeastNWidgets(1));
 
     // Verify theme toggle button exists
     // We expect to find the theme toggle button.

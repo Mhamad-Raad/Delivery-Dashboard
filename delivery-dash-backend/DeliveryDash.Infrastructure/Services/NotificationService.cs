@@ -201,5 +201,14 @@ namespace DeliveryDash.Infrastructure.Services
 
             return targets.Count;
         }
+
+        public Task<List<BroadcastSummaryResponse>> GetBroadcastsAsync(int skip, int take) =>
+            _notificationRepository.GetBroadcastsAsync(skip, take);
+
+        public Task<BroadcastSummaryResponse?> GetBroadcastAsync(int key) =>
+            _notificationRepository.GetBroadcastByKeyAsync(key);
+
+        public Task<int> DeleteBroadcastAsync(int key) =>
+            _notificationRepository.DeleteBroadcastByKeyAsync(key);
     }
 }

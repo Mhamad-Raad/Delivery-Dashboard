@@ -1,3 +1,4 @@
+using DeliveryDash.Application.Responses.NotificationResponses;
 using DeliveryDash.Domain.Entities;
 
 public interface INotificationRepository
@@ -10,4 +11,8 @@ public interface INotificationRepository
     Task DeleteAsync(Notification notification);
     Task MarkAllAsReadAsync(Guid userId);
     Task DeleteOldNotificationsAsync(Guid userId, int maxCount);
+
+    Task<List<BroadcastSummaryResponse>> GetBroadcastsAsync(int skip, int take);
+    Task<BroadcastSummaryResponse?> GetBroadcastByKeyAsync(int key);
+    Task<int> DeleteBroadcastByKeyAsync(int key);
 }

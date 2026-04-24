@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Premium luxury color palette for Mall Dash app.
+/// Premium luxury color palette for Delivery Dash app.
 /// Rich, warm tones with gold accents for a high-end feel.
 abstract final class AppColors {
   // ==========================================================================

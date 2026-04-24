@@ -108,7 +108,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Mall Dash',
+              'Delivery Dash',
               style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,

@@ -77,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen>
 
             // Brand Name
             Text(
-              'Mall Dash',
+              'Delivery Dash',
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w800,

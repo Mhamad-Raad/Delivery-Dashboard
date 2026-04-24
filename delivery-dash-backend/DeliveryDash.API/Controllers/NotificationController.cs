@@ -111,7 +111,7 @@ namespace DeliveryDash.API.Controllers
             [FromForm] string title,
             [FromForm] string body,
             [FromForm] string audience,
-            [FromForm] List<Guid>? customerIds,
+            [FromForm] List<string>? customerIds,
             IFormFile? image,
             CancellationToken ct)
         {
@@ -121,10 +121,27 @@ namespace DeliveryDash.API.Controllers
             if (!Enum.TryParse<BroadcastAudience>(audience, ignoreCase: true, out var parsedAudience))
                 return BadRequest(new { message = "audience must be 'AllCustomers' or 'SpecificUsers'." });
 
-            if (parsedAudience == BroadcastAudience.SpecificUsers &&
-                (customerIds is null || customerIds.Count == 0))
+            List<Guid>? parsedCustomerIds = null;
+            if (parsedAudience == BroadcastAudience.SpecificUsers)
             {
-                return BadRequest(new { message = "customerIds must be provided when audience is SpecificUsers." });
+                var raw = (customerIds ?? new List<string>())
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Select(s => s.Trim())
+                    .Distinct()
+                    .ToList();
+
+                if (raw.Count == 0)
+                    return BadRequest(new { message = "customerIds must be provided when audience is SpecificUsers." });
+
+                parsedCustomerIds = new List<Guid>(raw.Count);
+                var invalid = new List<string>();
+                foreach (var s in raw)
+                {
+                    if (Guid.TryParse(s, out var id)) parsedCustomerIds.Add(id);
+                    else invalid.Add(s);
+                }
+                if (invalid.Count > 0)
+                    return BadRequest(new { message = $"customerIds contained invalid GUIDs: {string.Join(", ", invalid)}" });
             }
 
             string? imageUrl = null;
@@ -139,9 +156,38 @@ namespace DeliveryDash.API.Controllers
             }
 
             var count = await _notificationService.BroadcastAsync(
-                title, body, imageUrl, parsedAudience, customerIds, ct);
+                title, body, imageUrl, parsedAudience, parsedCustomerIds, ct);
 
             return Ok(new { targeted = count, imageUrl });
+        }
+
+        [HttpGet("admin/broadcasts")]
+        [Authorize(Roles = $"{IdentityRoleConstant.SuperAdmin},{IdentityRoleConstant.Admin}")]
+        [EndpointDescription("Admin-only. Returns past broadcasts grouped by (title, message, created-at) with per-broadcast recipient counts. Newest first.")]
+        public async Task<IActionResult> GetBroadcasts([FromQuery] int skip = 0, [FromQuery] int take = 20)
+        {
+            var items = await _notificationService.GetBroadcastsAsync(skip, take);
+            return Ok(items);
+        }
+
+        [HttpGet("admin/broadcasts/{key:int}")]
+        [Authorize(Roles = $"{IdentityRoleConstant.SuperAdmin},{IdentityRoleConstant.Admin}")]
+        [EndpointDescription("Admin-only. Returns the broadcast that shares the (title, message, created-at) tuple with notification row `key`.")]
+        public async Task<IActionResult> GetBroadcast(int key)
+        {
+            var b = await _notificationService.GetBroadcastAsync(key);
+            if (b is null) return NotFound();
+            return Ok(b);
+        }
+
+        [HttpDelete("admin/broadcasts/{key:int}")]
+        [Authorize(Roles = $"{IdentityRoleConstant.SuperAdmin},{IdentityRoleConstant.Admin}")]
+        [EndpointDescription("Admin-only. Deletes every notification row belonging to the broadcast identified by `key`.")]
+        public async Task<IActionResult> DeleteBroadcast(int key)
+        {
+            var removed = await _notificationService.DeleteBroadcastAsync(key);
+            if (removed == 0) return NotFound();
+            return Ok(new { removed });
         }
     }
 }

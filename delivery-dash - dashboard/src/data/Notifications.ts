@@ -1,6 +1,23 @@
 import { axiosInstance } from '@/data/axiosInstance';
 import type { Notification, NotificationType } from '@/interfaces/Notification.interface';
 
+type AxiosLikeError = {
+  response?: { data?: { error?: string; message?: string; errors?: unknown[] } };
+  message?: string;
+};
+
+const extractError = (error: unknown): { error: string; errors: unknown[] } => {
+  const e = (error ?? {}) as AxiosLikeError;
+  return {
+    error:
+      e.response?.data?.error ||
+      e.response?.data?.message ||
+      e.message ||
+      'Unknown error',
+    errors: e.response?.data?.errors ?? [],
+  };
+};
+
 const API_KEY = import.meta.env.VITE_API_KEY;
 const API_VALUE = import.meta.env.VITE_API_VALUE;
 
@@ -43,12 +60,8 @@ export const broadcastNotification = async (
       },
     });
     return response.data;
-  } catch (error: any) {
-    const errorData = error.response?.data;
-    return {
-      error: errorData?.error || errorData?.message || error.message,
-      errors: errorData?.errors || [],
-    };
+  } catch (error) {
+    return extractError(error);
   }
 };
 
@@ -60,7 +73,7 @@ interface NotificationResponse {
   isRead: boolean;
   createdAt: string;
   actionUrl?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Transform backend response to frontend Notification type
@@ -123,5 +136,60 @@ export const deleteNotificationApi = async (id: number): Promise<void> => {
     await axiosInstance.delete(`/Notification/${id}`);
   } catch (error) {
     console.error('Error deleting notification:', error);
+  }
+};
+
+// ----- Admin broadcast history -----
+
+export interface BroadcastSummary {
+  key: number;
+  title: string;
+  message: string;
+  imageUrl: string | null;
+  createdAt: string;
+  recipients: number;
+}
+
+export const fetchBroadcasts = async (
+  skip = 0,
+  take = 20
+): Promise<BroadcastSummary[]> => {
+  try {
+    const response = await axiosInstance.get<BroadcastSummary[]>(
+      '/Notification/admin/broadcasts',
+      { params: { skip, take } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching broadcasts:', error);
+    return [];
+  }
+};
+
+export const fetchBroadcast = async (
+  key: number
+): Promise<BroadcastSummary | null> => {
+  try {
+    const response = await axiosInstance.get<BroadcastSummary>(
+      `/Notification/admin/broadcasts/${key}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching broadcast:', error);
+    return null;
+  }
+};
+
+export const deleteBroadcast = async (
+  key: number
+): Promise<{ removed: number } | { error: string }> => {
+  try {
+    const response = await axiosInstance.delete<{ removed: number }>(
+      `/Notification/admin/broadcasts/${key}`
+    );
+    return response.data;
+  } catch (error) {
+    const { error: msg } = extractError(error);
+    return { error: msg };
   }
 };

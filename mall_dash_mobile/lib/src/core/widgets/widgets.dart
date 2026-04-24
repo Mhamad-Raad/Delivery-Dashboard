@@ -2,7 +2,7 @@
 /// 
 /// Usage:
 /// ```dart
-/// import 'package:mall_dash/src/core/widgets/widgets.dart';
+/// import 'package:delivery_dash_mobile/src/core/widgets/widgets.dart';
 /// ```
 
 library widgets;

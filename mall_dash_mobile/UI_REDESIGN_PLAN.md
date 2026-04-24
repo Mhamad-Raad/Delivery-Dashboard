@@ -1,4 +1,4 @@
-﻿# Mall Dash Mobile - Luxury UI Redesign Plan
+﻿# Delivery Dash Mobile - Luxury UI Redesign Plan
 
 ## Status: COMPLETED
 

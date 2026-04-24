@@ -1,4 +1,5 @@
 using DeliveryDash.Application.Abstracts.IRepository;
+using DeliveryDash.Application.Responses.NotificationResponses;
 using DeliveryDash.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,6 +78,66 @@ namespace DeliveryDash.Infrastructure.Repositories
                     .Where(n => notifications.Contains(n.Id))
                     .ExecuteDeleteAsync();
             }
+        }
+
+        // A "broadcast" is identified by (Title, Message, CreatedAt) with Type="Broadcast".
+        // CreatedAt is assigned once per BroadcastAsync call, so the tuple is unique per broadcast.
+        public async Task<List<BroadcastSummaryResponse>> GetBroadcastsAsync(int skip, int take)
+        {
+            return await _context.Notifications
+                .Where(n => n.Type == "Broadcast")
+                .GroupBy(n => new { n.Title, n.Message, n.ImageUrl, n.CreatedAt })
+                .Select(g => new BroadcastSummaryResponse
+                {
+                    Key = g.Min(n => n.Id),
+                    Title = g.Key.Title,
+                    Message = g.Key.Message,
+                    ImageUrl = g.Key.ImageUrl,
+                    CreatedAt = g.Key.CreatedAt,
+                    Recipients = g.Count(),
+                })
+                .OrderByDescending(b => b.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<BroadcastSummaryResponse?> GetBroadcastByKeyAsync(int key)
+        {
+            var seed = await _context.Notifications.AsNoTracking()
+                .FirstOrDefaultAsync(n => n.Id == key && n.Type == "Broadcast");
+            if (seed is null) return null;
+
+            var recipients = await _context.Notifications.CountAsync(n =>
+                n.Type == "Broadcast" &&
+                n.Title == seed.Title &&
+                n.Message == seed.Message &&
+                n.CreatedAt == seed.CreatedAt);
+
+            return new BroadcastSummaryResponse
+            {
+                Key = key,
+                Title = seed.Title,
+                Message = seed.Message,
+                ImageUrl = seed.ImageUrl,
+                CreatedAt = seed.CreatedAt,
+                Recipients = recipients,
+            };
+        }
+
+        public async Task<int> DeleteBroadcastByKeyAsync(int key)
+        {
+            var seed = await _context.Notifications.AsNoTracking()
+                .FirstOrDefaultAsync(n => n.Id == key && n.Type == "Broadcast");
+            if (seed is null) return 0;
+
+            return await _context.Notifications
+                .Where(n =>
+                    n.Type == "Broadcast" &&
+                    n.Title == seed.Title &&
+                    n.Message == seed.Message &&
+                    n.CreatedAt == seed.CreatedAt)
+                .ExecuteDeleteAsync();
         }
     }
 }
