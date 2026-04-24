@@ -24,6 +24,7 @@ namespace DeliveryDash.Application.Services
         private readonly IOrderDispatchService _orderDispatchService;
         private readonly IOrderAssignmentRepository _orderAssignmentRepository;
         private readonly IDriverLocationService _driverLocationService;
+        private readonly IDriverNotificationService _driverNotificationService;
         private readonly IValidator<CreateOrderRequest> _createValidator;
         private readonly IValidator<UpdateOrderStatusRequest> _updateStatusValidator;
         private readonly IUnitOfWork _unitOfWork;
@@ -39,6 +40,7 @@ namespace DeliveryDash.Application.Services
             IOrderDispatchService orderDispatchService,
             IOrderAssignmentRepository orderAssignmentRepository,
             IDriverLocationService driverLocationService,
+            IDriverNotificationService driverNotificationService,
             IValidator<CreateOrderRequest> createValidator,
             IValidator<UpdateOrderStatusRequest> updateStatusValidator,
             IUnitOfWork unitOfWork,
@@ -53,6 +55,7 @@ namespace DeliveryDash.Application.Services
             _orderDispatchService = orderDispatchService;
             _orderAssignmentRepository = orderAssignmentRepository;
             _driverLocationService = driverLocationService;
+            _driverNotificationService = driverNotificationService;
             _createValidator = createValidator;
             _updateStatusValidator = updateStatusValidator;
             _unitOfWork = unitOfWork;
@@ -356,13 +359,23 @@ namespace DeliveryDash.Application.Services
 
             await _driverLocationService.ClearAsync(order.Id);
 
+            // If a driver had already accepted this order, tell them too.
+            var acceptedAssignment =
+                await _orderAssignmentRepository.GetAcceptedAssignmentByOrderAsync(order.Id);
+            if (acceptedAssignment != null)
+            {
+                await _driverNotificationService.SendOrderCancelledAsync(
+                    acceptedAssignment.DriverId, order.Id);
+            }
+
             if (vendor != null)
             {
                 await _notificationHubService.BroadcastOrderStatusAsync(
                     new OrderStatusUpdatedPayload(
                         order.Id, order.OrderNumber, OrderStatus.Cancelled, previousStatus, now, userRole.ToString()),
                     order.UserId,
-                    vendor.UserId);
+                    vendor.UserId,
+                    acceptedAssignment?.DriverId);
             }
 
             return MapToDetailResponse(updatedOrder);

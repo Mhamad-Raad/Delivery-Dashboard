@@ -23,6 +23,7 @@
     "email": "البريد الإلكتروني",
     "phone": "الهاتف",
     "deliveryAddressSection": "عنوان التسليم",
+    "locationOnMap": "الموقع على الخريطة",
     "building": "المبنى",
     "floor": "الطابق",
     "floorWithNumber": "الطابق {{number}}",

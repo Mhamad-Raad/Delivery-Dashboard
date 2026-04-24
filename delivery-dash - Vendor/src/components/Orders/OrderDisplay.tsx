@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { formatDate } from '@/utils/dateUtils';
 import { cn } from '@/lib/utils';
 import { OrderDisplaySkeleton } from './OrderDisplaySkeleton';
+import { CustomerLocationMap } from './CustomerLocationMap';
 
 interface OrderDisplayProps {
   orderId: number;
@@ -313,6 +314,28 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
               </div>
             )}
           </div>
+
+          {/* Customer location map */}
+          {order.deliveryAddress &&
+            typeof order.deliveryAddress.latitude === 'number' &&
+            typeof order.deliveryAddress.longitude === 'number' && (
+              <div className="mt-6">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {t('orders.locationOnMap')}
+                </p>
+                <CustomerLocationMap
+                  latitude={order.deliveryAddress.latitude}
+                  longitude={order.deliveryAddress.longitude}
+                  label={order.deliveryAddress.label ?? order.userName ?? null}
+                  addressLine={
+                    order.deliveryAddress.street ??
+                    order.deliveryAddress.buildingName ??
+                    null
+                  }
+                />
+              </div>
+            )}
         </div>
 
         {/* Order Items */}

@@ -7,6 +7,7 @@ namespace DeliveryDash.Application.Abstracts.IRepository
         Task<OrderAssignment?> GetByIdAsync(int id, CancellationToken ct = default);
         Task<OrderAssignment?> GetPendingAssignmentForOrderAsync(int orderId, CancellationToken ct = default);
         Task<OrderAssignment?> GetAcceptedAssignmentAsync(int orderId, Guid driverId, CancellationToken ct = default);
+        Task<OrderAssignment?> GetAcceptedAssignmentByOrderAsync(int orderId, CancellationToken ct = default);
         Task<IEnumerable<OrderAssignment>> GetExpiredAssignmentsAsync(CancellationToken ct = default);
         Task<OrderAssignment> CreateAsync(OrderAssignment assignment, CancellationToken ct = default);
         Task<OrderAssignment> UpdateAsync(OrderAssignment assignment, CancellationToken ct = default);

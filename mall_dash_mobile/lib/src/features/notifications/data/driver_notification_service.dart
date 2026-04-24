@@ -160,6 +160,13 @@ class DriverNotificationService {
         _handleSignalRNotification(arguments);
       });
 
+      // Listen for order status transitions. If one of this driver's accepted
+      // deliveries gets Cancelled (e.g. by an admin override), pop it from the
+      // active list so the driver stops driving to the customer.
+      connection.on('OrderStatusUpdated', (arguments) {
+        _handleOrderStatusUpdated(arguments);
+      });
+
       print('🔗 Connecting to notification SignalR hub: $hubUrl');
       await connection.start();
       print('========================================');
@@ -175,6 +182,39 @@ class DriverNotificationService {
       print('❌ ERROR: Failed to connect to SignalR hub');
       print('   Error: $e');
       print('========================================');
+    }
+  }
+
+  /// Handle `OrderStatusUpdated` SignalR events broadcast on NotificationHub.
+  /// Specifically, if status is Cancelled (6) we pop the order from the
+  /// driver's active deliveries — their currently-in-progress run is dead.
+  void _handleOrderStatusUpdated(List<Object?>? arguments) {
+    if (arguments == null || arguments.isEmpty) return;
+    final payload = arguments.first;
+    if (payload is! Map<String, dynamic>) return;
+
+    final orderId = (payload['orderId'] as num?)?.toInt();
+    final statusRaw = payload['status'];
+    int? status;
+    if (statusRaw is num) {
+      status = statusRaw.toInt();
+    } else if (statusRaw is String) {
+      status = int.tryParse(statusRaw);
+      if (status == null) {
+        // Backend also sends enum names on some paths ("Cancelled").
+        if (statusRaw == 'Cancelled') status = 6;
+      }
+    }
+
+    if (orderId == null || status == null) return;
+    if (status != 6) return; // we only care about Cancelled for this hook
+
+    print('📨 OrderStatusUpdated: order $orderId was Cancelled — removing from active deliveries');
+    try {
+      _ref.read(activeDeliveriesNotifierProvider.notifier).removeDelivery(orderId);
+      _ref.read(availableOrdersNotifierProvider.notifier).removeOrder(orderId);
+    } catch (e) {
+      print('⚠️ Failed to pop cancelled order from notifiers: $e');
     }
   }
 

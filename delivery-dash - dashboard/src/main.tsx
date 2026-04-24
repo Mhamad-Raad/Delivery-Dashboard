@@ -11,6 +11,7 @@ import App from './App.tsx';
 
 import './i18n';
 import './index.css';
+import 'leaflet/dist/leaflet.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

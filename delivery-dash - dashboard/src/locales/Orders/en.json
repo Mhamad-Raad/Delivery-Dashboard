@@ -23,6 +23,7 @@
     "email": "Email",
     "phone": "Phone",
     "deliveryAddressSection": "Delivery Address",
+    "locationOnMap": "Location on map",
     "building": "Building",
     "floor": "Floor",
     "floorWithNumber": "Floor {{number}}",

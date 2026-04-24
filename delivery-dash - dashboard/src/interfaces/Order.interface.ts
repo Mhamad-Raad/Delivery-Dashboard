@@ -22,6 +22,12 @@ export interface DeliveryAddress {
   buildingName: string;
   floorNumber: number;
   apartmentName: string;
+  latitude?: number;
+  longitude?: number;
+  street?: string;
+  phoneNumber?: string;
+  label?: string;
+  additionalDirections?: string;
 }
 
 export interface Order {

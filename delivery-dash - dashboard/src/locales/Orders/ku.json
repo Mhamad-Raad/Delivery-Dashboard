@@ -23,6 +23,7 @@
     "email": "ئیمەیڵ",
     "phone": "تەلەفۆن",
     "deliveryAddressSection": "ناونیشانی گەیاندن",
+    "locationOnMap": "شوێن لەسەر نەخشە",
     "building": "باڵەخانە",
     "floor": "نهۆم",
     "floorWithNumber": "نهۆمی {{number}}",

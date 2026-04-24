@@ -61,6 +61,7 @@
     "detailFloorLabel": "Floor",
     "detailNoAddress": "No delivery address provided",
     "detailDeliveryAddressTitle": "Delivery Address",
+    "locationOnMap": "Location on map",
     "detailNameLabel": "Name",
     "detailEmailLabel": "Email",
     "detailPhoneLabel": "Phone",

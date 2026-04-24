@@ -36,9 +36,18 @@ namespace DeliveryDash.Infrastructure.Repositories
         {
             return await _context.OrderAssignments
                 .Include(a => a.Order)
-                .FirstOrDefaultAsync(a => 
-                    a.OrderId == orderId && 
-                    a.DriverId == driverId && 
+                .FirstOrDefaultAsync(a =>
+                    a.OrderId == orderId &&
+                    a.DriverId == driverId &&
+                    a.Status == OrderAssignmentStatus.Accepted, ct);
+        }
+
+        public async Task<OrderAssignment?> GetAcceptedAssignmentByOrderAsync(int orderId, CancellationToken ct = default)
+        {
+            return await _context.OrderAssignments
+                .Include(a => a.Driver)
+                .FirstOrDefaultAsync(a =>
+                    a.OrderId == orderId &&
                     a.Status == OrderAssignmentStatus.Accepted, ct);
         }
 

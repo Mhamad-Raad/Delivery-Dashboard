@@ -28,6 +28,7 @@ import { signalRService } from '@/hooks/useSignalR';
 import type { AppDispatch } from '@/store/store';
 import type { Order, OrderStatus } from '@/interfaces/Order.interface';
 import { getStatusText } from '@/utils/orderUtils';
+import { CustomerLocationMap } from './CustomerLocationMap';
 import { formatDate } from '@/utils/dateUtils';
 import { cn } from '@/lib/utils';
 import { OrderDisplaySkeleton } from './OrderDisplaySkeleton';
@@ -268,6 +269,28 @@ const OrderDisplay = ({ orderId }: OrderDisplayProps) => {
               </div>
             )}
           </div>
+
+          {/* Customer location map */}
+          {order.deliveryAddress &&
+            typeof order.deliveryAddress.latitude === 'number' &&
+            typeof order.deliveryAddress.longitude === 'number' && (
+              <div className="mt-6">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {t('detail.locationOnMap', 'Location on map')}
+                </p>
+                <CustomerLocationMap
+                  latitude={order.deliveryAddress.latitude}
+                  longitude={order.deliveryAddress.longitude}
+                  label={order.deliveryAddress.label ?? order.userName ?? null}
+                  addressLine={
+                    order.deliveryAddress.street ??
+                    order.deliveryAddress.buildingName ??
+                    null
+                  }
+                />
+              </div>
+            )}
         </div>
 
         {/* Order Items */}
