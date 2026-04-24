@@ -25,6 +25,7 @@ namespace DeliveryDash.Application.Services
         private readonly IDriverNotificationService _notificationService;
         private readonly INotificationService _userNotificationService;
         private readonly INotificationHubService _notificationHubService;
+        private readonly IDriverLocationService _driverLocationService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly OrderDispatchSettings _settings;
         private readonly ILogger<OrderDispatchService> _logger;
@@ -38,6 +39,7 @@ namespace DeliveryDash.Application.Services
             IDriverNotificationService notificationService,
             INotificationService userNotificationService,
             INotificationHubService notificationHubService,
+            IDriverLocationService driverLocationService,
             IUnitOfWork unitOfWork,
             IOptions<OrderDispatchSettings> settings,
             ILogger<OrderDispatchService> logger)
@@ -50,6 +52,7 @@ namespace DeliveryDash.Application.Services
             _notificationService = notificationService;
             _userNotificationService = userNotificationService;
             _notificationHubService = notificationHubService;
+            _driverLocationService = driverLocationService;
             _unitOfWork = unitOfWork;
             _settings = settings.Value;
             _logger = logger;
@@ -287,6 +290,8 @@ namespace DeliveryDash.Application.Services
             }
 
             await tx.CommitAsync(ct);
+
+            await _driverLocationService.ClearAsync(orderId, ct);
 
             var vendor = await _vendorRepository.GetByIdAsync(order.VendorId);
             if (vendor != null)

@@ -8,6 +8,7 @@ import '../../../core/theme/custom_theme_extension.dart';
 import '../data/order_model.dart';
 import '../data/order_repository.dart';
 import 'orders_notifier.dart';
+import '../../tracking/presentation/order_tracking_map.dart';
 
 final orderDetailsProvider =
     FutureProvider.family<Order, int>((ref, orderId) async {
@@ -220,7 +221,7 @@ class _OrderDetailsPageState extends ConsumerState<OrderDetailsPage> {
 
           const SizedBox(height: 20),
 
-          //  Order timeline stepper 
+          //  Order timeline stepper
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _OrderTimeline(
@@ -230,9 +231,30 @@ class _OrderDetailsPageState extends ConsumerState<OrderDetailsPage> {
             ),
           ).animate(delay: 150.ms).fadeIn(duration: 500.ms).slideY(begin: 0.05),
 
+          //  Live driver tracking map (only while out for delivery)
+          if (order.status == 4) ...[
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _SectionHeader(
+                  title: 'Live Tracking',
+                  icon: Icons.delivery_dining_rounded,
+                  isDark: isDark),
+            ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: OrderTrackingMap(
+                orderId: order.id,
+                destinationLat: order.deliveryLatitude,
+                destinationLng: order.deliveryLongitude,
+              ),
+            ).animate(delay: 220.ms).fadeIn(duration: 400.ms).slideY(begin: 0.05),
+          ],
+
           const SizedBox(height: 24),
 
-          //  Order items 
+          //  Order items
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _SectionHeader(title: 'Order Items', icon: Icons.shopping_bag_rounded, isDark: isDark),

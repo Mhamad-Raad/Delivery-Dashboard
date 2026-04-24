@@ -11,6 +11,7 @@ import 'driver_orders_notifier.dart';
 import 'available_orders_page.dart';
 import 'active_deliveries_page.dart';
 import 'driver_profile_page.dart';
+import '../data/driver_location_tracker.dart';
 import '../../notifications/presentation/notifications_page.dart';
 import '../../settings/presentation/settings_page.dart';
 
@@ -27,6 +28,15 @@ class _DriverHomePageState extends ConsumerState<DriverHomePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+
+    ref.listen(activeDeliveriesNotifierProvider, (previous, next) {
+      final tracker = ref.read(driverLocationTrackerProvider);
+      final orderIds = next.maybeWhen(
+        data: (deliveries) => deliveries.map((d) => d.id),
+        orElse: () => const <int>[],
+      );
+      tracker.syncActiveOrders(orderIds);
+    });
 
     final List<Widget> pages = const [
       _DriverDashboardContent(),

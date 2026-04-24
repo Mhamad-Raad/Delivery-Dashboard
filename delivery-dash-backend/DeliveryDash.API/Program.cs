@@ -264,6 +264,7 @@ if (redisOptions != null && !string.IsNullOrEmpty(redisOptions.ConnectionString)
     });
 
     builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+    builder.Services.AddSingleton<IDriverLocationService, DriverLocationService>();
 }
 
 var app = builder.Build();
@@ -342,6 +343,7 @@ app.MapControllers();
 // Map SignalR Hubs
 app.MapHub<NotificationHub>("/hubs/notifications");  // for general notifications
 app.MapHub<DispatchHub>("/hubs/dispatch");           // for driver order dispatching
+app.MapHub<TrackingHub>("/hubs/tracking");           // for live driver location tracking
 
 // Configure static files - this is OK in the API layer
 var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "Uploads");

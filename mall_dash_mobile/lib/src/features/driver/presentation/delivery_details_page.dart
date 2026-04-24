@@ -6,6 +6,7 @@ import '../../../core/design/design_system.dart';
 import '../../../core/theme/custom_theme_extension.dart';
 import '../../../core/widgets/status_badge.dart';
 import 'driver_orders_notifier.dart';
+import 'driver_delivery_map.dart';
 import '../data/driver_order_model.dart';
 
 class DeliveryDetailsPage extends ConsumerWidget {
@@ -91,6 +92,23 @@ class DeliveryDetailsPage extends ConsumerWidget {
                     .fadeIn(duration: 500.ms, delay: 150.ms)
                     .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 150.ms, curve: Curves.easeOutCubic),
                 const SizedBox(height: 16),
+
+                // Map with live position, destination, polyline, and Navigate button.
+                // Shown from Confirmed onward (status >= 2) so the driver has it the moment they accept.
+                if (order.status >= 2 &&
+                    order.status < 5 &&
+                    order.latitude != null &&
+                    order.longitude != null) ...[
+                  DriverDeliveryMap(
+                    destinationLat: order.latitude!,
+                    destinationLng: order.longitude!,
+                    destinationLabel: order.customerName ?? 'Customer',
+                  )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 175.ms)
+                      .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 175.ms, curve: Curves.easeOutCubic),
+                  const SizedBox(height: 16),
+                ],
 
                 // Delivery Address
                 _buildAddressCard(context, order, isDark, appTheme)

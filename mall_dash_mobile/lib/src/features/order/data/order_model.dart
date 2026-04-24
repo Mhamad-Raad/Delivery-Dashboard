@@ -6,6 +6,8 @@ class Order {
   final int vendorId;
   final String? vendorName;
   final int? addressId;
+  final double? deliveryLatitude;
+  final double? deliveryLongitude;
   final double subtotal;
   final double deliveryFee;
   final double totalAmount;
@@ -30,6 +32,8 @@ class Order {
     required this.vendorId,
     this.vendorName,
     this.addressId,
+    this.deliveryLatitude,
+    this.deliveryLongitude,
     required this.subtotal,
     required this.deliveryFee,
     required this.totalAmount,
@@ -51,6 +55,14 @@ class Order {
     DateTime? parseDate(dynamic v) =>
         v == null ? null : DateTime.tryParse(v.toString());
 
+    final deliveryAddress = json['deliveryAddress'] as Map<String, dynamic>?;
+    double? latitude;
+    double? longitude;
+    if (deliveryAddress != null) {
+      latitude = (deliveryAddress['latitude'] as num?)?.toDouble();
+      longitude = (deliveryAddress['longitude'] as num?)?.toDouble();
+    }
+
     return Order(
       id: json['id'] as int? ?? 0,
       orderNumber: json['orderNumber'] as String? ?? '',
@@ -59,6 +71,8 @@ class Order {
       vendorId: json['vendorId'] as int? ?? 0,
       vendorName: json['vendorName'] as String?,
       addressId: json['addressId'] as int?,
+      deliveryLatitude: latitude,
+      deliveryLongitude: longitude,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? 0.0,
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,

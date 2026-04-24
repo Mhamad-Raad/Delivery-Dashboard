@@ -23,6 +23,7 @@ namespace DeliveryDash.Application.Services
         private readonly INotificationHubService _notificationHubService;
         private readonly IOrderDispatchService _orderDispatchService;
         private readonly IOrderAssignmentRepository _orderAssignmentRepository;
+        private readonly IDriverLocationService _driverLocationService;
         private readonly IValidator<CreateOrderRequest> _createValidator;
         private readonly IValidator<UpdateOrderStatusRequest> _updateStatusValidator;
         private readonly IUnitOfWork _unitOfWork;
@@ -37,6 +38,7 @@ namespace DeliveryDash.Application.Services
             INotificationHubService notificationHubService,
             IOrderDispatchService orderDispatchService,
             IOrderAssignmentRepository orderAssignmentRepository,
+            IDriverLocationService driverLocationService,
             IValidator<CreateOrderRequest> createValidator,
             IValidator<UpdateOrderStatusRequest> updateStatusValidator,
             IUnitOfWork unitOfWork,
@@ -50,6 +52,7 @@ namespace DeliveryDash.Application.Services
             _notificationHubService = notificationHubService;
             _orderDispatchService = orderDispatchService;
             _orderAssignmentRepository = orderAssignmentRepository;
+            _driverLocationService = driverLocationService;
             _createValidator = createValidator;
             _updateStatusValidator = updateStatusValidator;
             _unitOfWork = unitOfWork;
@@ -279,6 +282,11 @@ namespace DeliveryDash.Application.Services
 
             await tx.CommitAsync();
 
+            if (request.Status == OrderStatus.Delivered || request.Status == OrderStatus.Cancelled)
+            {
+                await _driverLocationService.ClearAsync(order.Id);
+            }
+
             _logger.LogInformation(
                 "Order {OrderId} status updated from {PreviousStatus} to {NewStatus} by role {Role}",
                 order.Id, previousStatus, request.Status, userRole);
@@ -345,6 +353,8 @@ namespace DeliveryDash.Application.Services
             }
 
             await tx.CommitAsync();
+
+            await _driverLocationService.ClearAsync(order.Id);
 
             if (vendor != null)
             {
