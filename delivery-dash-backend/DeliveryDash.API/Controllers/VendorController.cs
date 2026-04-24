@@ -77,14 +77,14 @@ namespace DeliveryDash.API.Controllers
 
         [HttpGet("tenant")]
         [AllowAnonymous]
-        [EndpointDescription("Public endpoint for tenants to browse available vendors. Returns a paginated list of vendors with optional filtering by name and type. No authentication required.")]
+        [EndpointDescription("Public endpoint for customers to browse vendors. Returns a paginated list filtered by name or product name (searchName matches both vendor names and the names of products they sell) and by VendorCategory. No authentication required.")]
         public async Task<IActionResult> GetAllVendorsCustomer(
             [FromQuery] int page = 1,
             [FromQuery] int limit = 10,
             [FromQuery] string? searchName = null,
             [FromQuery] int? vendorCategoryId = null)
         {
-            var vendors = await _vendorService.GetAllVendorsAsync(page, limit, searchName, vendorCategoryId);
+            var vendors = await _vendorService.GetAllVendorsAsync(page, limit, searchName, vendorCategoryId, matchProducts: true);
             return Ok(vendors);
         }
 

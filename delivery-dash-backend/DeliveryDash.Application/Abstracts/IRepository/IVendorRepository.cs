@@ -10,7 +10,8 @@ namespace DeliveryDash.Application.Abstracts.IRepository
             int page,
             int limit,
             string? searchName = null,
-            int? vendorCategoryId = null);
+            int? vendorCategoryId = null,
+            bool matchProducts = false);
         Task<Vendor> CreateAsync(Vendor vendor);
         Task<Vendor> UpdateAsync(Vendor vendor);
         Task DeleteAsync(int id);

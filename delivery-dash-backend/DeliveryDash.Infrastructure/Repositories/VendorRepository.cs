@@ -33,7 +33,8 @@ namespace DeliveryDash.Infrastructure.Repositories
             int page,
             int limit,
             string? searchName = null,
-            int? vendorCategoryId = null)
+            int? vendorCategoryId = null,
+            bool matchProducts = false)
         {
             var query = _context.Vendors
                 .Include(v => v.User)
@@ -43,8 +44,14 @@ namespace DeliveryDash.Infrastructure.Repositories
 
             if (!string.IsNullOrWhiteSpace(searchName))
             {
-                searchName = searchName.Trim();
-                query = query.Where(v => EF.Functions.ILike(v.Name, $"%{searchName}%"));
+                var term = $"%{searchName.Trim()}%";
+                query = matchProducts
+                    ? query.Where(v =>
+                        EF.Functions.ILike(v.Name, term) ||
+                        _context.Products.Any(p =>
+                            p.VendorId == v.Id &&
+                            EF.Functions.ILike(p.Name, term)))
+                    : query.Where(v => EF.Functions.ILike(v.Name, term));
             }
 
             if (vendorCategoryId.HasValue)

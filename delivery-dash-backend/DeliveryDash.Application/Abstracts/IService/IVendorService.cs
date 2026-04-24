@@ -12,7 +12,8 @@ namespace DeliveryDash.Application.Abstracts.IService
             int page = 1,
             int limit = 10,
             string? searchName = null,
-            int? vendorCategoryId = null);
+            int? vendorCategoryId = null,
+            bool matchProducts = false);
         Task<VendorDetailResponse> CreateVendorAsync(CreateVendorRequest request, string? imageUrl = null);
         Task<VendorDetailResponse> UpdateVendorAsync(int id, UpdateVendorRequest request, string? imageUrl = null);
         Task DeleteVendorAsync(int id);

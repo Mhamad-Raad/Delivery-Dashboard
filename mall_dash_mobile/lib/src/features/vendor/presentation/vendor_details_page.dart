@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -11,24 +11,60 @@ import '../../../core/widgets/loading_indicator.dart';
 import '../../vendor/data/vendor_model.dart';
 import '../../product/data/product_repository.dart';
 import '../../product/data/product_model.dart';
+import '../../category/data/category_repository.dart';
+import '../../category/data/category_model.dart';
 import '../../order/presentation/cart_notifier.dart';
 import '../../order/presentation/cart_page.dart';
 
-final vendorProductsProvider = FutureProvider.family<List<Product>, int>((ref, vendorId) async {
-  final repository = ref.watch(productRepositoryProvider);
-  return await repository.getProducts(vendorId: vendorId);
-});
-
-class VendorDetailsPage extends ConsumerWidget {
+class VendorDetailsPage extends ConsumerStatefulWidget {
   final Vendor vendor;
 
   const VendorDetailsPage({super.key, required this.vendor});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VendorDetailsPage> createState() => _VendorDetailsPageState();
+}
+
+class _VendorDetailsPageState extends ConsumerState<VendorDetailsPage> {
+  int? _selectedCategoryId;
+  late Future<List<Product>> _productsFuture;
+  late Future<List<Category>> _categoriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriesFuture =
+        ref.read(categoryRepositoryProvider).getByVendor(widget.vendor.id);
+    _productsFuture = _loadProducts();
+  }
+
+  Future<List<Product>> _loadProducts() {
+    return ref.read(productRepositoryProvider).getProducts(
+          vendorId: widget.vendor.id,
+          categoryId: _selectedCategoryId,
+        );
+  }
+
+  void _onCategorySelected(int? categoryId) {
+    if (_selectedCategoryId == categoryId) return;
+    setState(() {
+      _selectedCategoryId = categoryId;
+      _productsFuture = _loadProducts();
+    });
+  }
+
+  void _refresh() {
+    setState(() {
+      _categoriesFuture =
+          ref.read(categoryRepositoryProvider).getByVendor(widget.vendor.id);
+      _productsFuture = _loadProducts();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final appTheme = context.appTheme;
     final isDark = context.isDarkMode;
-    final productsState = ref.watch(vendorProductsProvider(vendor.id));
     final cart = ref.watch(cartProvider);
 
     return Scaffold(
@@ -68,7 +104,7 @@ class VendorDetailsPage extends ConsumerWidget {
             padding: const EdgeInsets.only(right: 12),
             child: Center(
               child: GestureDetector(
-                onTap: () => ref.invalidate(vendorProductsProvider(vendor.id)),
+                onTap: _refresh,
                 child: Container(
                   width: 40,
                   height: 40,
@@ -91,19 +127,31 @@ class VendorDetailsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: productsState.when(
-        data: (products) => _VendorContent(
-          vendor: vendor,
-          products: products,
-          isDark: isDark,
-          appTheme: appTheme,
-        ),
-        loading: () => const LoadingIndicator(),
-        error: (error, stack) => ErrorState(
-          title: 'Error loading products',
-          message: error.toString(),
-          onRetry: () => ref.invalidate(vendorProductsProvider(vendor.id)),
-        ),
+      body: FutureBuilder<List<Product>>(
+        future: _productsFuture,
+        builder: (context, productSnapshot) {
+          if (productSnapshot.connectionState == ConnectionState.waiting &&
+              !productSnapshot.hasData) {
+            return const LoadingIndicator();
+          }
+          if (productSnapshot.hasError) {
+            return ErrorState(
+              title: 'Error loading products',
+              message: productSnapshot.error.toString(),
+              onRetry: _refresh,
+            );
+          }
+          final products = productSnapshot.data ?? const <Product>[];
+          return _VendorContent(
+            vendor: widget.vendor,
+            products: products,
+            isDark: isDark,
+            appTheme: appTheme,
+            categoriesFuture: _categoriesFuture,
+            selectedCategoryId: _selectedCategoryId,
+            onCategorySelected: _onCategorySelected,
+          );
+        },
       ),
       floatingActionButton: cart.isNotEmpty
           ? _CartFab(cart: cart, isDark: isDark)
@@ -119,7 +167,7 @@ class VendorDetailsPage extends ConsumerWidget {
   }
 }
 
-//  Cart FAB 
+//  Cart FAB
 
 class _CartFab extends StatelessWidget {
   final Cart cart;
@@ -186,19 +234,25 @@ class _CartFab extends StatelessWidget {
   }
 }
 
-//  Vendor Content (scrollable body) 
+//  Vendor Content (scrollable body)
 
 class _VendorContent extends StatelessWidget {
   final Vendor vendor;
   final List<Product> products;
   final bool isDark;
   final CustomThemeExtension appTheme;
+  final Future<List<Category>> categoriesFuture;
+  final int? selectedCategoryId;
+  final ValueChanged<int?> onCategorySelected;
 
   const _VendorContent({
     required this.vendor,
     required this.products,
     required this.isDark,
     required this.appTheme,
+    required this.categoriesFuture,
+    required this.selectedCategoryId,
+    required this.onCategorySelected,
   });
 
   @override
@@ -206,19 +260,29 @@ class _VendorContent extends StatelessWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        //  Hero Header 
+        //  Hero Header
         SliverToBoxAdapter(child: _buildHeroHeader(context)),
-        //  Vendor Info Bar 
+        //  Vendor Info Bar
         SliverToBoxAdapter(
           child: _buildInfoBar(context)
               .animate()
               .fadeIn(duration: 500.ms, delay: 200.ms)
               .slideY(begin: 0.1, end: 0),
         ),
-        //  Section Title 
+        //  Category Filter Chips
+        SliverToBoxAdapter(
+          child: _CategoryChipStrip(
+            categoriesFuture: categoriesFuture,
+            selectedCategoryId: selectedCategoryId,
+            onSelected: onCategorySelected,
+            isDark: isDark,
+            appTheme: appTheme,
+          ),
+        ),
+        //  Section Title
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
             child: Text(
               'Products',
               style: GoogleFonts.inter(
@@ -248,7 +312,9 @@ class _VendorContent extends StatelessWidget {
                   ),
                   AppSpacing.verticalGapMd,
                   Text(
-                    'No products available',
+                    selectedCategoryId == null
+                        ? 'No products available'
+                        : 'No products in this category',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -257,7 +323,9 @@ class _VendorContent extends StatelessWidget {
                   ),
                   AppSpacing.verticalGapXs,
                   Text(
-                    'Check back later for new items',
+                    selectedCategoryId == null
+                        ? 'Check back later for new items'
+                        : 'Try a different category',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: appTheme.textTertiary,
@@ -268,7 +336,7 @@ class _VendorContent extends StatelessWidget {
             ),
           )
         else
-          //  Product Grid 
+          //  Product Grid
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
             sliver: SliverGrid(
@@ -447,7 +515,126 @@ class _VendorContent extends StatelessWidget {
   }
 }
 
-//  Product Card 
+//  Category Chip Strip
+
+class _CategoryChipStrip extends StatelessWidget {
+  final Future<List<Category>> categoriesFuture;
+  final int? selectedCategoryId;
+  final ValueChanged<int?> onSelected;
+  final bool isDark;
+  final CustomThemeExtension appTheme;
+
+  const _CategoryChipStrip({
+    required this.categoriesFuture,
+    required this.selectedCategoryId,
+    required this.onSelected,
+    required this.isDark,
+    required this.appTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Category>>(
+      future: categoriesFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final categories = snapshot.data!;
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: categories.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _Chip(
+                    label: 'All',
+                    selected: selectedCategoryId == null,
+                    onTap: () => onSelected(null),
+                    isDark: isDark,
+                    appTheme: appTheme,
+                  );
+                }
+                final category = categories[index - 1];
+                return _Chip(
+                  label: category.name,
+                  selected: selectedCategoryId == category.id,
+                  onTap: () => onSelected(category.id),
+                  isDark: isDark,
+                  appTheme: appTheme,
+                );
+              },
+            ),
+          ),
+        ).animate().fadeIn(duration: 500.ms, delay: 250.ms);
+      },
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool isDark;
+  final CustomThemeExtension appTheme;
+
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.isDark,
+    required this.appTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary
+              : (isDark
+                  ? AppColors.surfaceVariantDark.withAlpha(120)
+                  : AppColors.surfaceVariant.withAlpha(180)),
+          borderRadius: AppRadius.radiusPill,
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : (isDark
+                    ? Colors.white.withAlpha(10)
+                    : Colors.black.withAlpha(8)),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: selected
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimary),
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+//  Product Card
 
 class _ProductCard extends ConsumerWidget {
   final Product product;
@@ -478,7 +665,7 @@ class _ProductCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          //  Image 
+          //  Image
           Expanded(
             flex: 5,
             child: Stack(
@@ -576,7 +763,7 @@ class _ProductCard extends ConsumerWidget {
               ],
             ),
           ),
-          //  Details 
+          //  Details
           Expanded(
             flex: 4,
             child: Padding(

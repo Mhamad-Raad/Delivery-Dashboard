@@ -63,9 +63,10 @@ namespace DeliveryDash.Application.Services
             int page = 1,
             int limit = 10,
             string? searchName = null,
-            int? vendorCategoryId = null)
+            int? vendorCategoryId = null,
+            bool matchProducts = false)
         {
-            var (vendors, total) = await _vendorRepository.GetVendorsPagedAsync(page, limit, searchName, vendorCategoryId);
+            var (vendors, total) = await _vendorRepository.GetVendorsPagedAsync(page, limit, searchName, vendorCategoryId, matchProducts);
 
             var vendorResponses = vendors.Select(MapToResponse).ToList();
 

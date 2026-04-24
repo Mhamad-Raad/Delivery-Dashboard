@@ -13,14 +13,22 @@ class VendorRepository {
 
   VendorRepository({required Dio dio}) : _dio = dio;
 
-  Future<List<Vendor>> getVendors({int page = 1, int limit = 100}) async {
+  Future<List<Vendor>> getVendors({
+    int page = 1,
+    int limit = 100,
+    String? searchName,
+  }) async {
     try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+      };
+      if (searchName != null && searchName.trim().isNotEmpty) {
+        queryParams['searchName'] = searchName.trim();
+      }
       final response = await _dio.get(
         '/Vendor/tenant',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
