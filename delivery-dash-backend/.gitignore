@@ -8,6 +8,10 @@
 .env.local
 .env.*.local
 
+# Firebase service-account keys (never commit)
+*firebase-adminsdk*.json
+delivery-dash-fcm.json
+
 # User-specific files
 *.rsuser
 *.suo
