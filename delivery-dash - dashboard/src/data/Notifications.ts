@@ -1,6 +1,57 @@
 import { axiosInstance } from '@/data/axiosInstance';
 import type { Notification, NotificationType } from '@/interfaces/Notification.interface';
 
+const API_KEY = import.meta.env.VITE_API_KEY;
+const API_VALUE = import.meta.env.VITE_API_VALUE;
+
+export type BroadcastAudience = 'AllCustomers' | 'SpecificUsers';
+
+export interface BroadcastRequest {
+  title: string;
+  body: string;
+  audience: BroadcastAudience;
+  customerIds?: string[];
+  image?: File | null;
+}
+
+export interface BroadcastResponse {
+  targeted: number;
+  imageUrl: string | null;
+}
+
+export const broadcastNotification = async (
+  req: BroadcastRequest
+): Promise<BroadcastResponse | { error: string; errors?: unknown[] }> => {
+  try {
+    const form = new FormData();
+    form.append('title', req.title);
+    form.append('body', req.body);
+    form.append('audience', req.audience);
+
+    if (req.audience === 'SpecificUsers') {
+      (req.customerIds ?? []).forEach((id) => form.append('customerIds', id));
+    }
+    if (req.image) {
+      form.append('image', req.image);
+    }
+
+    const response = await axiosInstance.post('/Notification/broadcast', form, {
+      headers: {
+        key: API_KEY,
+        value: API_VALUE,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    const errorData = error.response?.data;
+    return {
+      error: errorData?.error || errorData?.message || error.message,
+      errors: errorData?.errors || [],
+    };
+  }
+};
+
 interface NotificationResponse {
   id: number;
   title: string;

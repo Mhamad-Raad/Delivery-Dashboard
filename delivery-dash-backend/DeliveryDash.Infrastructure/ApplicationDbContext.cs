@@ -26,6 +26,7 @@ namespace DeliveryDash.Infrastructure
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<DriverShift> DriverShifts { get; set; }
         public DbSet<OrderAssignment> OrderAssignments { get; set; }
+        public DbSet<DeviceToken> DeviceTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

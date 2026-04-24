@@ -141,7 +141,7 @@ namespace DeliveryDash.Application.Services
 
             var createdOrder = await _orderRepository.CreateAsync(order);
 
-            // Notify vendor about new order
+            // Notify vendor about new order (DB row + SignalR ReceiveNotification + FCM push)
             await _notificationService.SendNotificationAsync(
                 vendor.UserId,
                 "New Order Received",
@@ -149,6 +149,19 @@ namespace DeliveryDash.Application.Services
                 "Order",
                 $"/orders/{createdOrder.Id}",
                 $"{{\"orderId\":{createdOrder.Id},\"orderNumber\":\"{orderNumber}\",\"totalAmount\":{totalAmount}}}");
+
+            // Broadcast an OrderStatusUpdated event too so the vendor dashboard's orders list
+            // reloads in real time. previousStatus is null since this is a newly-created order.
+            await _notificationHubService.BroadcastOrderStatusAsync(
+                new OrderStatusUpdatedPayload(
+                    createdOrder.Id,
+                    createdOrder.OrderNumber,
+                    OrderStatus.Pending,
+                    PreviousStatus: null,
+                    Timestamp: createdOrder.CreatedAt,
+                    TriggeredBy: "Customer"),
+                createdOrder.UserId,
+                vendor.UserId);
 
             return MapToDetailResponse(createdOrder);
         }

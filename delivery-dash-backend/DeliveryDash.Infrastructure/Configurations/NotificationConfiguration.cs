@@ -31,6 +31,9 @@ namespace DeliveryDash.Infrastructure.Configurations
             builder.Property(n => n.Metadata)
                 .HasColumnType("jsonb");
 
+            builder.Property(n => n.ImageUrl)
+                .HasMaxLength(1000);
+
             // Indexes
             builder.HasIndex(n => n.UserId)
                 .HasDatabaseName("IX_Notifications_UserId");

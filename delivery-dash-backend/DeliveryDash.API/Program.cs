@@ -168,6 +168,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<DeliveryDash.Application.Abstracts.IUnitOfWork, DeliveryDash.Infrastructure.UnitOfWork.EfUnitOfWork>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IDeviceTokenRepository, DeviceTokenRepository>();
 builder.Services.AddScoped<IVendorStaffRepository, VendorStaffRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<ISupportTicketRepository, SupportTicketRepository>();
@@ -266,6 +267,37 @@ if (redisOptions != null && !string.IsNullOrEmpty(redisOptions.ConnectionString)
     builder.Services.AddSingleton<ICacheService, RedisCacheService>();
     builder.Services.AddSingleton<IDriverLocationService, DriverLocationService>();
 }
+
+// ===== Firebase Cloud Messaging =====
+builder.Services.Configure<FirebaseOptions>(
+    builder.Configuration.GetSection(FirebaseOptions.SectionName));
+
+var firebaseOptions = builder.Configuration.GetSection(FirebaseOptions.SectionName).Get<FirebaseOptions>();
+if (firebaseOptions != null && !string.IsNullOrWhiteSpace(firebaseOptions.ServiceAccountPath))
+{
+    try
+    {
+        if (File.Exists(firebaseOptions.ServiceAccountPath))
+        {
+            if (FirebaseAdmin.FirebaseApp.DefaultInstance is null)
+            {
+                FirebaseAdmin.FirebaseApp.Create(new FirebaseAdmin.AppOptions
+                {
+                    Credential = Google.Apis.Auth.OAuth2.GoogleCredential.FromFile(firebaseOptions.ServiceAccountPath),
+                });
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[Firebase] Service-account file not found at '{firebaseOptions.ServiceAccountPath}'. Push notifications will be no-op.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Firebase] Failed to initialize: {ex.Message}. Push notifications will be no-op.");
+    }
+}
+builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
 
 var app = builder.Build();
 

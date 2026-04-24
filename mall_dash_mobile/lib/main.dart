@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,12 +10,23 @@ import 'src/core/providers/shared_preferences_provider.dart';
 import 'src/core/providers/theme_provider.dart';
 import 'src/core/providers/localization_provider.dart';
 import 'src/features/auth/presentation/auth_widget.dart';
+import 'src/features/notifications/data/fcm_service.dart';
 import 'src/core/theme/custom_theme_extension.dart';
 import 'src/core/design/design_system.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Firebase must be initialized before the background handler is registered,
+  // so the OS-spawned background isolate can reuse the configured app.
+  try {
+    await FcmService.ensureFirebaseInitialized();
+    FirebaseMessaging.onBackgroundMessage(firebaseBackgroundMessageHandler);
+  } catch (_) {
+    // firebase_options.dart / google-services.json not yet set up — skip.
+    // App keeps running without push.
+  }
+
   // Set system UI overlay style for premium feel
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -22,10 +34,10 @@ void main() async {
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
-  
+
   // Enable edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  
+
   final prefs = await SharedPreferences.getInstance();
 
   runApp(ProviderScope(

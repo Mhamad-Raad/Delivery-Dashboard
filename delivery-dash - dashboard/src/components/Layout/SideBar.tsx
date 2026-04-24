@@ -14,6 +14,7 @@ import {
   Palette,
   History,
   LifeBuoy,
+  Bell,
 } from 'lucide-react';
 
 import { useSelector } from 'react-redux';
@@ -90,6 +91,11 @@ const mainNavItems = [
 
 // Management items
 const managementItems = [
+  {
+    titleKey: 'notifications',
+    url: '/notifications',
+    icon: Bell,
+  },
   {
     titleKey: 'reports',
     url: '/reports',

@@ -10,5 +10,6 @@ namespace DeliveryDash.Application.Responses.NotificationResponses
         public DateTime CreatedAt { get; set; }
         public string? ActionUrl { get; set; }
         public string? Metadata { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }

@@ -16,6 +16,7 @@ import '../../features/settings/presentation/settings_page.dart';
 import '../../features/driver/presentation/driver_home_page.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../../features/order/data/customer_order_stream_service.dart';
+import '../../features/notifications/data/fcm_service.dart';
 import '../constants/user_role.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
@@ -28,19 +29,31 @@ class MainScaffold extends ConsumerStatefulWidget {
 class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _currentIndex = 1;
   bool _customerStreamStarted = false;
+  bool _fcmStarted = false;
 
   @override
   void dispose() {
     if (_customerStreamStarted) {
       ref.read(customerOrderStreamServiceProvider).stop();
     }
+    if (_fcmStarted) {
+      // Fire-and-forget: we don't want to block disposal.
+      // ignore: unawaited_futures
+      ref.read(fcmServiceProvider).stop();
+    }
     super.dispose();
   }
 
   void _ensureCustomerStreamStarted() {
-    if (_customerStreamStarted) return;
-    _customerStreamStarted = true;
-    ref.read(customerOrderStreamServiceProvider).start();
+    if (!_customerStreamStarted) {
+      _customerStreamStarted = true;
+      ref.read(customerOrderStreamServiceProvider).start();
+    }
+    if (!_fcmStarted) {
+      _fcmStarted = true;
+      // ignore: unawaited_futures
+      ref.read(fcmServiceProvider).start();
+    }
   }
 
   @override

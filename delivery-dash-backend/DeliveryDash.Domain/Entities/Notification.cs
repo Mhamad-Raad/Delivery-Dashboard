@@ -11,6 +11,7 @@ namespace DeliveryDash.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? ActionUrl { get; set; }
         public string? Metadata { get; set; }
+        public string? ImageUrl { get; set; }
 
         // Navigation
         public User? User { get; set; }
