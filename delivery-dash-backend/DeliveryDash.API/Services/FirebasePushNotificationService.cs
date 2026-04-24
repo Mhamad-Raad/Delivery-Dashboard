@@ -63,6 +63,31 @@ namespace DeliveryDash.API.Services
                 ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl,
             };
 
+            // Tell Android explicitly which channel to use and to display at
+            // high priority. Without this Android may silently drop the push
+            // on newer OS versions / strict OEMs (Xiaomi, Huawei, etc.).
+            var androidConfig = new AndroidConfig
+            {
+                Priority = Priority.High,
+                Notification = new AndroidNotification
+                {
+                    ChannelId = "delivery_dash_default",
+                    Priority = NotificationPriority.HIGH,
+                    DefaultSound = true,
+                    DefaultVibrateTimings = true,
+                },
+            };
+
+            // And on iOS (future-proofing) push as alert with sound.
+            var apnsConfig = new ApnsConfig
+            {
+                Aps = new Aps
+                {
+                    ContentAvailable = true,
+                    Sound = "default",
+                },
+            };
+
             var badTokens = new List<string>();
 
             // FCM multicast caps at 500 tokens per call.
@@ -74,6 +99,8 @@ namespace DeliveryDash.API.Services
                 {
                     Tokens = chunk,
                     Notification = notification,
+                    Android = androidConfig,
+                    Apns = apnsConfig,
                     Data = data?.ToDictionary(kv => kv.Key, kv => kv.Value),
                 };
 

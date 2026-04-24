@@ -102,6 +102,23 @@ class FcmService {
 
   Future<void> _ensureFirebase() => ensureFirebaseInitialized();
 
+  /// Idempotent. Creates the high-importance Android notification channel so
+  /// the OS can route FCM pushes while the app is backgrounded/killed, even
+  /// before the user has logged in. Safe to call from main().
+  static Future<void> ensureChannelCreated() async {
+    if (kIsWeb || !Platform.isAndroid) return;
+    final plugin = FlutterLocalNotificationsPlugin();
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings();
+    await plugin.initialize(
+      const InitializationSettings(android: androidInit, iOS: iosInit),
+    );
+    await plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_androidChannel);
+  }
+
   Future<void> _setupLocalNotifications() async {
     const androidInit =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -119,13 +136,33 @@ class FcmService {
   }
 
   Future<void> _requestPermission() async {
+    // iOS / web: triggers the native permission dialog.
     final settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
-    developer.log('FCM permission: ${settings.authorizationStatus}',
+    developer.log('FCM permission (FirebaseMessaging): ${settings.authorizationStatus}',
         name: 'FcmService');
+
+    // Android 13+: FirebaseMessaging.requestPermission is a NO-OP on Android —
+    // it doesn't pop the system dialog. We have to ask via
+    // flutter_local_notifications, which wraps the real Android API.
+    if (!kIsWeb && Platform.isAndroid) {
+      final androidImpl = _local.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      final granted =
+          await androidImpl?.requestNotificationsPermission() ?? false;
+      developer.log(
+          'Android POST_NOTIFICATIONS permission granted: $granted',
+          name: 'FcmService');
+      if (!granted) {
+        developer.log(
+            'Notifications BLOCKED by user. Open: Settings → Apps → this app → '
+            'Notifications → Allow. No popups will be shown until then.',
+            name: 'FcmService');
+      }
+    }
   }
 
   Future<void> _registerToken() async {
@@ -163,10 +200,19 @@ class FcmService {
     _onMessageSub = FirebaseMessaging.onMessage.listen((message) async {
       // Foreground: Android won't show the push automatically, so we render
       // it via flutter_local_notifications.
+      developer.log(
+          'onMessage fired. id=${message.messageId} '
+          'notification=${message.notification?.title}/${message.notification?.body} '
+          'data=${message.data}',
+          name: 'FcmService.fg');
       final notif = message.notification;
       final title = notif?.title ?? message.data['title'] ?? '';
       final body = notif?.body ?? message.data['body'] ?? '';
-      if (title.isEmpty && body.isEmpty) return;
+      if (title.isEmpty && body.isEmpty) {
+        developer.log('onMessage: empty title+body, skipping local show',
+            name: 'FcmService.fg');
+        return;
+      }
 
       await _local.show(
         message.hashCode,

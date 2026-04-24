@@ -22,6 +22,10 @@ void main() async {
   try {
     await FcmService.ensureFirebaseInitialized();
     FirebaseMessaging.onBackgroundMessage(firebaseBackgroundMessageHandler);
+    // Create the high-importance notification channel eagerly — even before the
+    // user logs in — so when FCM delivers a `notification` payload while the
+    // app is killed/backgrounded, Android has a channel to route it through.
+    await FcmService.ensureChannelCreated();
   } catch (_) {
     // firebase_options.dart / google-services.json not yet set up — skip.
     // App keeps running without push.
