@@ -1,6 +1,6 @@
 // Example: 1260500 => "1,260,500"
 export function formatWithCommas(number: number): string {
-  if (!number) 'undefined';
+  if (!number) return 'undefined';
 
   return number.toLocaleString();
 }

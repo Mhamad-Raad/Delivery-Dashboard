@@ -11,11 +11,14 @@ interface TimelineSliderProps {
 
 const TimelineSlider = memo(({ openingTime, closeTime, onTimeChange, disabled }: TimelineSliderProps) => {
   const { t } = useTranslation('vendors');
-  if (!openingTime || !closeTime) return null;
 
-  const [openHour, openMin] = openingTime.split(':').map(Number);
-  const [closeHour, closeMin] = closeTime.split(':').map(Number);
-  
+  // All hooks must run unconditionally before any early return so React's
+  // hook-order invariant is preserved across renders.
+  const safeOpen = openingTime || '00:00';
+  const safeClose = closeTime || '00:00';
+  const [openHour, openMin] = safeOpen.split(':').map(Number);
+  const [closeHour, closeMin] = safeClose.split(':').map(Number);
+
   // Convert times to minutes from midnight
   const openMinutes = openHour * 60 + openMin;
   const closeMinutes = closeHour * 60 + closeMin;
@@ -27,6 +30,8 @@ const TimelineSlider = memo(({ openingTime, closeTime, onTimeChange, disabled }:
   useEffect(() => {
     setLocalValue([openMinutes, closeMinutes]);
   }, [openMinutes, closeMinutes]);
+
+  if (!openingTime || !closeTime) return null;
   
   const totalMinutes = closeMinutes - openMinutes;
   const hours = Math.floor(totalMinutes / 60);

@@ -73,7 +73,7 @@ export const fetchOrderById = async (
 export const updateOrderStatus = async (
   id: number,
   status: number,
-): Promise<boolean | { error: string }> => {
+): Promise<true | { error: string }> => {
   try {
     await axiosInstance.put(
       `/Order/${id}/status`,

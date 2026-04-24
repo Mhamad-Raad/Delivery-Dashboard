@@ -144,7 +144,8 @@ export default function CreateUser() {
     let userName = '';
 
     if (type === 'Staff') {
-      const { confirmPassword, photo, ...userData } = staffFormData;
+      // Intentionally strip confirmPassword from the payload sent to the API.
+      const { confirmPassword: _confirmPassword, photo, ...userData } = staffFormData;
 
       userName = `${staffFormData.firstName} ${staffFormData.lastName}`;
       data = {
@@ -152,7 +153,8 @@ export default function CreateUser() {
         ...(photo ? { ProfileImageUrl: photo } : {}),
       };
     } else if (type === 'Customer') {
-      const { confirmPassword, photo, ...userData } = customerFormData;
+      // Intentionally strip confirmPassword from the payload sent to the API.
+      const { confirmPassword: _confirmPassword, photo, ...userData } = customerFormData;
 
       userName = `${customerFormData.firstName} ${customerFormData.lastName}`;
       data = {

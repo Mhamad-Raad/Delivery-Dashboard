@@ -45,7 +45,8 @@ export default function CreateUser() {
     let res: any = {};
     let userName = '';
 
-    const { confirmPassword, photo, ...userData } = staffFormData;
+    // Intentionally strip confirmPassword from the payload sent to the API.
+    const { confirmPassword: _confirmPassword, photo, ...userData } = staffFormData;
 
     if (
       !userData.firstName ||

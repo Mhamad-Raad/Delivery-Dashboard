@@ -145,8 +145,8 @@ const ProductDetail = () => {
           oldVal = oldNum == null ? '—' : `$${oldNum.toFixed(2)}`;
           newVal = newNum == null ? '—' : `$${newNum.toFixed(2)}`;
         } else if (key === 'inStock' || key === 'isWeightable') {
-          oldVal = Boolean(oldVal) ? t('common.yes') : t('common.no');
-          newVal = Boolean(newVal) ? t('common.yes') : t('common.no');
+          oldVal = oldVal ? t('common.yes') : t('common.no');
+          newVal = newVal ? t('common.yes') : t('common.no');
         } else if (key === 'categoryId') {
           oldVal = product.categoryName ?? String(oldVal ?? '');
           newVal = String(newVal ?? '');

@@ -19,5 +19,20 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Allow intentionally-unused catch-block error vars + args prefixed with _.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrors: 'none',
+        },
+      ],
+      // `any` in catch blocks / third-party payload shims — warn, not block.
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // HMR-only rule, legitimately violated by shadcn/ui components.
+      'react-refresh/only-export-components': 'warn',
+    },
   },
 ])
