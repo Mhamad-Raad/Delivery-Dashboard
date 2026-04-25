@@ -1,0 +1,14 @@
+{
+  "@@locale": "fa",
+  "appTitle": "Delivery Dash",
+  "theme": "رواڵەت",
+  "language": "زمان",
+  "lightTheme": "ڕۆشن",
+  "darkTheme": "تاریک",
+  "systemTheme": "سیستەم",
+  "loginTitle": "چوونەژوورەوە",
+  "username": "ناوى بەکارهێنەر",
+  "password": "وشەی نهێنی",
+  "loginButton": "چوونە ژوورەوە",
+  "welcomeMessage": "بەخێربێیتەوە!"
+}
