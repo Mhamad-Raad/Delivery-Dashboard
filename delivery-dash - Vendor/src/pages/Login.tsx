@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, Copy, Check, KeyRound } from 'lucide-react';
 import { loginUser } from '@/data/Authorization';
 import { validateRefreshToken } from '@/utils/authUtils';
 import Logo from '@/assets/Logo.jpg';
@@ -23,6 +23,22 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null);
+
+  const demoEmail = 'bako@gmail.com';
+  const demoPassword = 'bakogyanB1';
+
+  const copyToClipboard = (value: string, field: 'email' | 'password') => {
+    navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 1500);
+  };
+
+  const fillDemoCredentials = () => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    if (isLocked) setIsLocked(false);
+  };
 
   useEffect(() => {
     const checkSession = async () => {
@@ -188,6 +204,53 @@ const Login = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Demo Credentials Helper */}
+      <div className='fixed bottom-4 right-4 z-20 max-w-[300px]'>
+        <div className='rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-lg p-4'>
+          <div className='flex items-center gap-2 mb-3'>
+            <KeyRound className='h-4 w-4 text-primary' />
+            <span className='text-xs font-semibold text-foreground tracking-wide uppercase'>Demo Credentials</span>
+          </div>
+          <div className='space-y-2 text-xs'>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='min-w-0 flex-1'>
+                <div className='text-muted-foreground text-[10px] uppercase tracking-wide'>Email</div>
+                <div className='text-foreground font-mono truncate'>{demoEmail}</div>
+              </div>
+              <button
+                type='button'
+                onClick={() => copyToClipboard(demoEmail, 'email')}
+                className='flex-shrink-0 p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors'
+                title='Copy email'
+              >
+                {copiedField === 'email' ? <Check className='h-3.5 w-3.5 text-green-600' /> : <Copy className='h-3.5 w-3.5' />}
+              </button>
+            </div>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='min-w-0 flex-1'>
+                <div className='text-muted-foreground text-[10px] uppercase tracking-wide'>Password</div>
+                <div className='text-foreground font-mono truncate'>{demoPassword}</div>
+              </div>
+              <button
+                type='button'
+                onClick={() => copyToClipboard(demoPassword, 'password')}
+                className='flex-shrink-0 p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors'
+                title='Copy password'
+              >
+                {copiedField === 'password' ? <Check className='h-3.5 w-3.5 text-green-600' /> : <Copy className='h-3.5 w-3.5' />}
+              </button>
+            </div>
+          </div>
+          <button
+            type='button'
+            onClick={fillDemoCredentials}
+            className='mt-3 w-full text-xs font-medium py-1.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 transition-colors'
+          >
+            Auto-fill
+          </button>
+        </div>
       </div>
     </div>
   );

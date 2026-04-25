@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { BackgroundBeams } from '@/components/ui/background-beams';
-import { Eye, EyeOff, Mail, Lock, Loader2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, ArrowLeft, Copy, Check, KeyRound } from 'lucide-react';
 import { loginUser, forgotPassword } from '@/data/Authorization';
 import { validateRefreshToken } from '@/utils/authUtils';
 import { setAccessToken } from '@/store/slices/notificationsSlice';
@@ -28,6 +28,22 @@ const Login = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null);
+
+  const demoEmail = 'hamaraad883@gmail.com';
+  const demoPassword = 'hamagyanH1';
+
+  const copyToClipboard = (value: string, field: 'email' | 'password') => {
+    navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 1500);
+  };
+
+  const fillDemoCredentials = () => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    if (isLocked) setIsLocked(false);
+  };
 
   useEffect(() => {
     const checkSession = async () => {
@@ -296,6 +312,53 @@ const Login = () => {
               </form>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Demo Credentials Helper */}
+      <div className='fixed bottom-4 right-4 z-20 max-w-[300px]'>
+        <div className='rounded-xl border border-white/10 bg-white/5 backdrop-blur-md shadow-xl p-4'>
+          <div className='flex items-center gap-2 mb-3'>
+            <KeyRound className='h-4 w-4 text-primary' />
+            <span className='text-xs font-semibold text-white tracking-wide uppercase'>Demo Credentials</span>
+          </div>
+          <div className='space-y-2 text-xs'>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='min-w-0 flex-1'>
+                <div className='text-zinc-500 text-[10px] uppercase tracking-wide'>Email</div>
+                <div className='text-zinc-200 font-mono truncate'>{demoEmail}</div>
+              </div>
+              <button
+                type='button'
+                onClick={() => copyToClipboard(demoEmail, 'email')}
+                className='flex-shrink-0 p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-white transition-colors'
+                title='Copy email'
+              >
+                {copiedField === 'email' ? <Check className='h-3.5 w-3.5 text-green-400' /> : <Copy className='h-3.5 w-3.5' />}
+              </button>
+            </div>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='min-w-0 flex-1'>
+                <div className='text-zinc-500 text-[10px] uppercase tracking-wide'>Password</div>
+                <div className='text-zinc-200 font-mono truncate'>{demoPassword}</div>
+              </div>
+              <button
+                type='button'
+                onClick={() => copyToClipboard(demoPassword, 'password')}
+                className='flex-shrink-0 p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-white transition-colors'
+                title='Copy password'
+              >
+                {copiedField === 'password' ? <Check className='h-3.5 w-3.5 text-green-400' /> : <Copy className='h-3.5 w-3.5' />}
+              </button>
+            </div>
+          </div>
+          <button
+            type='button'
+            onClick={fillDemoCredentials}
+            className='mt-3 w-full text-xs font-medium py-1.5 rounded-md bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-colors'
+          >
+            Auto-fill
+          </button>
         </div>
       </div>
 
